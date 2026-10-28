@@ -8,11 +8,11 @@ An original, standalone side-view tactical RPG. Three shinobi follow a mysteriou
 2. Double-click **index.html** and open it in a current Edge, Chrome or Firefox browser.
 3. Choose **New expedition**. Open **Field manual** for combat rules.
 
-`index.html` is the complete playable build. It embeds every script, style, vector drawing and synthesized sound. You may copy this single file anywhere. No server, npm, account, CDN, font download or network connection is needed to play. Desktop / laptop landscape is recommended (900 × 700 minimum; 1440 × 900 ideal). Browser zoom out can help on smaller displays.
+`index.html` is the complete playable build. It embeds PixiJS, every script, illustrated PNG asset, style and synthesized sound. You may copy this single file anywhere. No server, npm, account, CDN, font download or network connection is needed to play. Desktop / laptop landscape is recommended (900 × 700 minimum; 1440 × 900 ideal). Browser zoom out can help on smaller displays.
 
 ## Included
 
-- Only Tristan, Roy and Niek are playable. Original animated procedural characters preserve their core features: dark spiky hair, glasses and black layers; close-cropped sandy hair and blue-gray clothing; eye-covering hair, tan clothing, burgundy sash and puppet.
+- Only Tristan, Roy and Niek are playable. Generated illustrated sprite characters preserve their core features: dark spiky hair, glasses and black layers; close-cropped sandy hair and blue-gray clothing; eye-covering hair, tan clothing, burgundy sash and puppet.
 - Tristan's kinetic effects use olive, bronze and warm gold. Roy has pale lightning, dash trails and a lightning-cat silhouette. Niek manipulates threads and venom.
 - Five techniques per hero: four initially available, one unlocked through progression, plus Guard. Separate chakra and Momentum / Charge / Threads resources.
 - Three encounters: patrol, armored foundry defenders, and the Hollow Warden. Boss-wide Rupture, interruptible wind-up and accelerated enrage below half HP.
@@ -36,10 +36,14 @@ New expedition asks before replacing an existing save. Save import validates v0.
 
 ## Development
 
-No runtime dependencies. Source is organized as:
+PixiJS 7.4.3 (MIT) is vendored and embedded; no runtime downloads or install steps. Source is organized as:
 
 - `src/engine.js`: pure combat rules, character data, progression and rewards.
-- `src/art.js`: procedural battlefield, character rendering and animation effects.
+- `src/art.js`: PixiJS sprite playback, layered parts, parallax and particles.
+- `src/legacy-scene.js`: existing enemies and later environments retained during the art transition.
+- `assets/manifest.json`: image references, atlas rectangles, pivots, layered parts and animation sequences.
+- `assets/characters/` and `assets/environments/`: original generated illustration assets.
+- `assets/vendor/`: pinned PixiJS bundle and license.
 - `src/game.js`: screens, action sequencing, audio and persistence.
 - `src/style.css`: interface and responsive layout.
 - `src/shell.html`: HTML entry template.
@@ -52,10 +56,11 @@ Validation:
 ```sh
 node tests/combat.test.js
 node tests/browser.test.js
+node tests/renderer.test.js
 ```
 
-The browser test requires Playwright and Chromium as **development-only** tools. It uses a temporary loopback server because the cloud image's browser policy blocks file URLs; the delivered game does not need that server. `CHROMIUM_PATH` can select a different Chromium executable. The rules tests use only Node's standard library. Windows itself is not available in the development environment, so a Windows double-click launch has not been exercised here.
+The browser tests require Playwright and Chromium as **development-only** tools. It uses a temporary loopback server because the cloud image's browser policy blocks file URLs; the delivered game does not need that server. `CHROMIUM_PATH` can select a different Chromium executable. The campaign test exercises the Canvas fallback; the renderer test verifies Canvas and WebGL. Appending `?renderer=canvas` to the game URL selects the fallback manually for troubleshooting. The rules tests use only Node's standard library. Windows itself is not available in the development environment, so a Windows double-click launch has not been exercised here.
 
 ## Scope and next steps
 
-This is a small, complete chapter and extensible foundation. Art is original stylized vector illustration rather than high-resolution painted animation. Advanced technique evolution, more individual branch nodes, additional equipment slots, longer missions and further chapters are future work. No third-party game assets or prior FRACTURELINE code are included.
+This is a small, complete chapter and extensible foundation. The three protagonists now use detailed illustrated transparent PNG atlases, with five painted key poses per hero and sequenced / transformed playback. The title and first combat scene use painted background and foreground layers with parallax. Existing enemies and the later two environment backdrops retain their prior vector artwork; their visual replacement is deliberately deferred until this first scene is evaluated. This is a key-pose animation foundation, not yet a dense frame-by-frame or fully articulated character rig. See [the asset workflow](assets/WORKFLOW.md). Advanced technique evolution, more individual branch nodes, additional equipment slots, longer missions and further chapters are future work. No third-party game artwork or prior FRACTURELINE implementation is used. Existing v0.1 saves remain compatible.

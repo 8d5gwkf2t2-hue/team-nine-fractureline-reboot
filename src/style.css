@@ -43,7 +43,7 @@ button:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
-canvas {
+#world {
   position: fixed;
   inset: 0;
   width: 100%;
@@ -504,4 +504,64 @@ select {
 }
 .hero-card header .row {
   gap: 9px;
+}
+/* Illustrated scene sits behind the existing combat UI. */
+#art-status {
+  position: fixed;
+  bottom: 20px;
+  right: 24px;
+  z-index: 20;
+  padding: 12px 20px;
+  border: 1px solid var(--gold);
+  background: #10232a;
+  color: var(--gold);
+  font-size: 12px;
+}
+#art-status[hidden] {
+  display: none;
+}
+#art-status.failed {
+  color: #f0af96;
+  max-width: 500px;
+}
+.hero-card {
+  padding: 8px 12px;
+}
+.hero-card .portrait {
+  width: 27px;
+  height: 27px;
+}
+.hero-card .bar {
+  margin: 4px 0;
+}
+.commands .panel {
+  padding: 16px;
+}
+.hero-copy {
+  background: linear-gradient(90deg, #0b171e80, transparent);
+  padding: 14px 0;
+}
+.top {
+  background: linear-gradient(90deg, #0b171e55, transparent);
+}
+.portrait {
+  image-rendering: auto;
+}
+@media (max-height: 740px) {
+  .ability small[style] {
+    display: none !important;
+  }
+  .party {
+    margin-bottom: 8px;
+  }
+  .commands .panel {
+    padding: 10px;
+  }
+  .hero-card {
+    padding: 6px 9px;
+  }
+  .hero-card .portrait {
+    width: 22px;
+    height: 22px;
+  }
 }

@@ -12,10 +12,11 @@ let server;
     args: ["--no-sandbox"],
   });
   server = http.createServer((req, res) => {
+    const pathname = new URL(req.url, "http://localhost").pathname;
     const file = path.resolve(
       __dirname,
       "..",
-      "." + (req.url === "/" ? "/index.html" : req.url),
+      "." + (pathname === "/" ? "/index.html" : pathname),
     );
     try {
       res.setHeader(
@@ -40,7 +41,10 @@ let server;
     requests = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("request", (r) => requests.push(r.url()));
-  await page.goto("http://127.0.0.1:" + server.address().port);
+  await page.goto(
+    "http://127.0.0.1:" + server.address().port + "?renderer=canvas",
+  );
+  await page.evaluate(() => IllustratedRenderer.ready);
   await page.screenshot({ path: "/tmp/fracture-menu.png" });
   await page.getByRole("button", { name: "New expedition" }).click();
   await page.getByRole("button", { name: "Character builds" }).click();
@@ -136,12 +140,14 @@ let server;
     mimeType: "application/json",
     buffer: Buffer.from('{"version":0}'),
   });
-  await page.waitForTimeout(100);
+  await page.waitForFunction(() =>
+    document.querySelector(".notice")?.textContent.includes("not a valid"),
+  );
   assert.equal(await page.evaluate(() => save.cleared.length), 3);
   await page
     .locator("#import-file")
     .setInputFiles("/tmp/fracture-test-save.json");
-  await page.waitForTimeout(100);
+  await page.waitForFunction(() => screen === "camp");
   assert.equal(await page.evaluate(() => screen), "camp");
   assert.equal(await page.evaluate(() => save.gold), backup.gold);
   await page.reload();

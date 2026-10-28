@@ -121,9 +121,7 @@ function sound(kind) {
 const button = (label, action, cls = "", disabled = false) =>
   `<button class="${cls}" data-action="${action}" ${disabled ? "disabled" : ""}>${label}</button>`;
 function portrait(i) {
-  let hair = ["#18201f", "#b8a179", "#b09a70"][i],
-    coat = ["#242c2d", "#566d80", "#a68d65"][i];
-  return `<svg class="portrait" viewBox="0 0 64 64" aria-label="${N.HEROES[i].name} portrait" role="img"><rect width="64" height="64" fill="#263a40"/><path d="M6 64L13 45 26 40 39 40 52 47 60 64" fill="${coat}"/><path d="M22 27Q17 48 32 49Q48 47 44 27" fill="#c5a487"/><path d="${i === 0 ? "M17 29L13 15 21 19 20 6 29 14 36 3 39 16 51 11 45 27 36 21 27 26Z" : i === 1 ? "M18 29L17 20 23 12 39 12 47 20 46 29 40 23 24 23Z" : "M15 37L16 18 25 9 42 14 49 24 47 41 39 31 34 42 28 32 22 42Z"}" fill="${hair}"/>${i === 0 ? '<g stroke="#111c20" fill="none" stroke-width="2.5"><rect x="20" y="29" width="10" height="7"/><rect x="34" y="29" width="10" height="7"/><path d="M30 31H34"/></g>' : i === 1 ? '<path d="M23 32H28M35 32H40" stroke="#83bddd" stroke-width="2"/>' : ""}<path d="M28 41H35" stroke="#805f50"/><path d="M22 48L32 54 43 47 42 59 22 59" fill="${i === 2 ? "#663c43" : "#29383f"}"/></svg>`;
+  return `<canvas class="portrait" data-portrait="${i}" width="64" height="64" aria-label="${N.HEROES[i].name} illustrated portrait" role="img"></canvas>`;
 }
 function head() {
   return `<div class="top"><div class="brand">TEAM NINE <span style="color:#788b90">/</span> FRACTURELINE</div><div class="row"><span class="tag">TACTICAL RPG · V0.1</span>${screen !== "menu" ? button("Guide", "guide") : ""}${button(save.settings.sound ? "♫ Sound on" : "♫ Sound off", "sound", "", false)}</div></div>`;
@@ -212,6 +210,7 @@ function render() {
           : "") +
     (notice ? `<div class="notice" role="status">${esc(notice)}</div>` : "") +
     `<input type="file" id="import-file" accept="application/json,.json" hidden>`;
+  window.IllustratedRenderer?.paintPortraits();
   document.querySelector("#gear")?.addEventListener("change", (e) => {
     save.heroes[tab].gear = e.target.value;
     persist();
@@ -245,14 +244,19 @@ function resolve(index, guard = false) {
   if (guard && !N.defend(b)) return;
   busy = true;
   sound(N.HEROES[hero].id);
-  if (!guard)
-    choreograph(hero, target, N.ABILITIES[N.HEROES[hero].id][index][4]);
+  choreograph(
+    hero,
+    target,
+    guard ? "defense" : N.ABILITIES[N.HEROES[hero].id][index][4],
+  );
   render();
   setTimeout(
     () => {
       if (finish()) return;
       if (b.phase === "enemy") {
+        const before = b.heroes.map((h) => h.hp);
         N.enemyTurn(b);
+        window.IllustratedRenderer?.reactToEnemy(before, b);
         if (finish()) return;
       }
       if (b.enemies[b.selected].hp <= 0)

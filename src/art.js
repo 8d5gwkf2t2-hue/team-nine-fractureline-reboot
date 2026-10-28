@@ -1,619 +1,520 @@
-/* Offline procedural art: painted ruins, articulated silhouettes and particle choreography. */
+/* Illustrated sprite renderer. Combat remains entirely in engine.js.
+ * PixiJS 7 legacy provides WebGL plus a Canvas fallback, both served locally.
+ */
 (function () {
-  const canvas = document.querySelector("#world"),
-    c = canvas.getContext("2d");
-  let W = 1440,
-    H = 900,
-    t = 0,
-    fx = null;
-  window.choreograph = (hero, target, kind) => {
-    fx = { hero, target, kind, start: performance.now() };
+  "use strict";
+  const P = PIXI,
+    data = GameAssets,
+    W = 1440,
+    H = 900;
+  const ids = ["tristan", "roy", "niek"];
+  const status = document.querySelector("#art-status");
+  const diagnostics = {
+    ready: false,
+    backend: null,
+    assets: 0,
+    frames: {},
+    states: [],
+    particles: 0,
+    errors: [],
   };
-  const poly = (pts, fill, stroke) => {
-    c.beginPath();
-    pts.forEach((p, i) => (i ? c.lineTo(...p) : c.moveTo(...p)));
-    c.closePath();
-    c.fillStyle = fill;
-    c.fill();
-    if (stroke) {
-      c.strokeStyle = stroke;
-      c.stroke();
-    }
-  };
-  function line(x, y, a, b, color, w = 1) {
-    c.strokeStyle = color;
-    c.lineWidth = w;
-    c.beginPath();
-    c.moveTo(x, y);
-    c.lineTo(a, b);
-    c.stroke();
+  let pixi, root, backgrounds, actors, foregrounds, effects, selection;
+  let currentBattle = null,
+    time = 0,
+    activeAction = null,
+    enemyViews = [],
+    previousScene = "";
+  const images = {},
+    textures = {},
+    heroes = [],
+    particles = [],
+    feedback = [];
+  const enemyTextures = new Map();
+  let pointer = { x: 0, y: 0 },
+    livePointer = { x: 0, y: 0 };
+  const motion = () =>
+    !window.reduceMotion &&
+    !matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const hex = (c) => parseInt(c.slice(1), 16);
+  const api = (window.IllustratedRenderer = { diagnostics, ready: null });
+
+  function loadImage(id, src) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => {
+        images[id] = image;
+        textures[id] = P.Texture.from(image);
+        diagnostics.assets++;
+        resolve();
+      };
+      image.onerror = () =>
+        reject(new Error("Could not decode illustrated asset: " + id));
+      image.src = src;
+    });
   }
-  function oval(x, y, rx, ry, col) {
-    c.fillStyle = col;
-    c.beginPath();
-    c.ellipse(x, y, rx, ry, 0, 0, 7);
-    c.fill();
+  function texture(id, rect) {
+    return new P.Texture(textures[id].baseTexture, new P.Rectangle(...rect));
   }
-  function person(x, y, id, scale = 1, active = false, dead = false) {
-    c.save();
-    c.translate(x, y + Math.sin(t * 1.8 + x) * 3);
-    c.scale(scale, scale);
-    if (dead) c.globalAlpha = 0.25;
-    let attack =
-      fx && ["tristan", "roy", "niek"][fx.hero] === id
-        ? (performance.now() - fx.start) / 850
-        : 2;
-    let striking = attack < 1 && attack > 0.15;
-    let tr = id === "tristan",
-      roy = id === "roy",
-      col = tr ? "#1d2528" : roy ? "#536879" : "#9d8865",
-      skin = "#c3a080";
-    oval(0, 3, 43, 9, "#060d12aa");
-    if (active) {
-      c.strokeStyle = tr ? "#a1a25d" : roy ? "#8ebdd6" : "#caa490";
-      c.lineWidth = 2;
-      c.beginPath();
-      c.ellipse(0, 3, 46, 12, 0, 0, 7);
-      c.stroke();
+
+  // Each pose is a reusable layered container. Frame sequences can reference as
+  // many independently authored atlas cells as an artist supplies in the manifest.
+  class CharacterView extends P.Container {
+    constructor(id, index) {
+      super();
+      this.id = id;
+      this.index = index;
+      this.config = data.characters[id];
+      this.poses = {};
+      this.state = "idle";
+      this.started = 0;
+      this.transientUntil = 0;
+      this.scale.set(this.config.height / 650);
+      for (const [name, frame] of Object.entries(this.config.frames)) {
+        const pose = new P.Container(),
+          body = new P.Sprite(texture(id, frame.rect));
+        body.position.set(-frame.pivot[0], -frame.pivot[1]);
+        pose.addChild(body);
+        if (frame.mask) {
+          const mask = new P.Graphics()
+            .beginFill(0xffffff)
+            .drawPolygon(frame.mask)
+            .endFill();
+          mask.position.copyFrom(body.position);
+          pose.addChild(mask);
+          body.mask = mask;
+        }
+        pose.parts = [];
+        for (const layer of frame.layers || []) {
+          const part = new P.Sprite(texture(id, layer.rect));
+          part.name = layer.name;
+          part.pivot.set(...(layer.pivot || [0, 0]));
+          part.position.set(...layer.offset);
+          part.rest = [...layer.offset];
+          part.motion = layer.motion;
+          pose.parts.push(part);
+          pose.addChild(part);
+        }
+        pose.visible = false;
+        this.poses[name] = pose;
+        this.addChild(pose);
+      }
+      diagnostics.frames[id] = Object.keys(this.poses);
+      this.setState("idle", true);
     }
-    poly(
-      [
-        [-25, -73],
-        [-6, -73],
-        [-8, -6],
-        [-27, -6],
-      ],
-      "#202c37",
-    );
-    poly(
-      [
-        [3, -73],
-        [23, -73],
-        [30, -8],
-        [9, -8],
-      ],
-      "#17232e",
-    );
-    line(-27, -25, -8, -25, "#b1b1a0", 7);
-    line(7, -28, 26, -28, "#b1b1a0", 7);
-    poly(
-      [
-        [-29, -9],
-        [-8, -9],
-        [-5, 0],
-        [-36, 0],
-      ],
-      "#111b23",
-    );
-    poly(
-      [
-        [9, -9],
-        [30, -9],
-        [42, 0],
-        [7, 0],
-      ],
-      "#111b23",
-    );
-    poly(
-      [
-        [-23, -145],
-        [20, -145],
-        [30, -77],
-        [-31, -77],
-      ],
-      col,
-      "#17222a",
-    );
-    poly(
-      [
-        [-20, -142],
-        [2, -129],
-        [18, -145],
-        [20, -117],
-        [-21, -117],
-      ],
-      tr ? "#141d21" : "#34434c",
-    );
-    poly(
-      [
-        [-23, -143],
-        [-12, -137],
-        [-17, -86],
-        [-30, -78],
-      ],
-      "#101b2444",
-    );
-    line(8, -113, 20, -113, "#c6c2a155", 1);
-    line(9, -109, 20, -109, "#c6c2a144", 1);
-    line(-4, -116, -4, -80, tr ? "#56615c" : "#c0ac88", 2);
-    if (tr) {
-      line(-22, -136, 18, -87, "#454c46", 7);
-      for (let i = 0; i < 4; i++)
-        line(-17 + i * 8, -86, -17 + i * 8, -77, "#727364", 4);
+    setState(state, restart = false) {
+      if (!restart && this.state === state) return;
+      this.state = state;
+      this.started = performance.now();
+      diagnostics.states.push({ hero: this.id, state });
+      if (diagnostics.states.length > 80) diagnostics.states.shift();
     }
-    poly(
-      [
-        [-22, -138],
-        [-33, -128],
-        [-48, -87],
-        [-37, -80],
-        [-15, -117],
-      ],
-      col,
-    );
-    if (striking) {
-      poly(
-        [
-          [19, -140],
-          [37, -140],
-          [88, -139],
-          [89, -125],
-          [38, -122],
-          [18, -116],
-        ],
-        col,
-      );
-      oval(91, -131, 9, 8, skin);
-      line(71, -137, 72, -125, "#b4b4a6", 8);
-    } else
-      poly(
-        [
-          [19, -140],
-          [33, -129],
-          [49, -105],
-          [40, -97],
-          [18, -116],
-        ],
-        col,
-      );
-    line(-45, -95, -41, -84, "#b4b4a6", 10);
-    line(43, -106, 49, -98, "#b4b4a6", 9);
-    oval(-43, -80, 7, 8, skin);
-    oval(49, -96, 7, 7, skin);
-    oval(0, -163, 21, 27, skin);
-    if (tr) {
-      poly(
-        [
-          [-25, -166],
-          [-28, -184],
-          [-15, -180],
-          [-18, -196],
-          [-5, -186],
-          [5, -201],
-          [11, -184],
-          [27, -190],
-          [22, -176],
-          [32, -169],
-          [17, -171],
-          [9, -181],
-          [-3, -173],
-          [-16, -177],
-        ],
-        "#111b1d",
-      );
-      c.strokeStyle = "#11191b";
-      c.lineWidth = 3;
-      c.strokeRect(-19, -168, 16, 11);
-      c.strokeRect(2, -168, 16, 11);
-      line(-3, -164, 2, -164, "#11191b", 2);
-      line(-13, -163, -9, -163, "#aca367", 2);
-      line(7, -163, 11, -163, "#aca367", 2);
-    } else if (roy) {
-      poly(
-        [
-          [-22, -168],
-          [-22, -184],
-          [-14, -192],
-          [7, -193],
-          [22, -180],
-          [21, -169],
-          [12, -178],
-          [-13, -178],
-        ],
-        "#b6a078",
-      );
-      line(-14, -164, -8, -164, "#85bedb", 3);
-      line(6, -164, 12, -164, "#85bedb", 3);
-    } else {
-      poly(
-        [
-          [-25, -156],
-          [-24, -181],
-          [-9, -195],
-          [8, -190],
-          [22, -185],
-          [27, -157],
-          [18, -145],
-          [13, -162],
-          [5, -148],
-          [-3, -164],
-          [-12, -148],
-          [-15, -163],
-        ],
-        "#b49b6b",
-      );
-      poly(
-        [
-          [-30, -88],
-          [27, -88],
-          [29, -72],
-          [-31, -75],
-        ],
-        "#653c44",
-      );
-      for (let i = 0; i < 4; i++)
-        line(48 + i * 2, -92, 62 + i * 5, -24, "#d7c7a277");
-      oval(73, -25, 10, 12, "#746042");
-      line(73, -14, 73, 13, "#816c4d", 8);
-      line(73, 2, 57, 13, "#816c4d", 4);
-      line(74, 2, 88, 11, "#816c4d", 4);
+    transient(state, ms = 500) {
+      this.setState(state, true);
+      this.transientUntil = performance.now() + ms;
     }
-    line(-6, -148, 6, -148, "#775c4d", 1);
-    c.restore();
+    update(now, guard, down) {
+      if (
+        now > this.transientUntil &&
+        (!activeAction || activeAction.hero !== this.index)
+      )
+        this.setState(guard ? "defense" : "idle");
+      const anim = data.animations[this.state] || data.animations.idle;
+      let step = Math.floor(((now - this.started) / 1000) * anim.fps);
+      step = anim.loop
+        ? step % anim.frames.length
+        : Math.min(step, anim.frames.length - 1);
+      const name = motion()
+        ? anim.frames[step]
+        : this.state === "damage"
+          ? "damage"
+          : this.state === "defense"
+            ? "defense"
+            : this.state === "special"
+              ? "special"
+              : this.state === "attack"
+                ? "attack"
+                : "idle";
+      for (const [key, pose] of Object.entries(this.poses)) {
+        pose.visible = key === name;
+        if (pose.visible)
+          for (const part of pose.parts) {
+            part.rotation =
+              motion() && part.motion === "pendulum"
+                ? Math.sin(time * 2.5) * 0.055
+                : 0;
+            part.y = part.rest[1] + (motion() ? Math.sin(time * 2.2) * 2 : 0);
+          }
+      }
+      this.alpha = down ? 0.27 : 1;
+      this.tint = 0xffffff;
+      this.angle = this.state === "damage" && motion() ? -4 : 0;
+    }
   }
-  function enemy(x, y, i, b) {
-    let e = b?.enemies[i],
-      boss = e?.name === "Hollow Warden",
-      archer = e?.name.includes("archer"),
-      stalker = e?.name.includes("stalker"),
-      acolyte = e?.name.includes("acolyte");
-    c.save();
-    c.translate(x, y + Math.sin(t * 2 + i) * 2);
-    if (e?.hp <= 0) c.globalAlpha = 0.18;
-    let s = boss ? 1.45 : 1;
-    c.scale(s, s);
-    oval(0, 0, 45, 10, "#060b12aa");
-    poly(
-      [
-        [-24, -85],
-        [-4, -85],
-        [-14, 0],
-        [-34, 0],
-      ],
-      "#252c32",
-    );
-    poly(
-      [
-        [0, -86],
-        [24, -86],
-        [35, 0],
-        [14, 0],
-      ],
-      "#252c32",
-    );
-    poly(
-      [
-        [-30, -148],
-        [26, -148],
-        [38, -72],
-        [-36, -72],
-      ],
-      boss ? "#434442" : "#3c3a42",
-      "#737367",
-    );
-    poly(
-      [
-        [-35, -150],
-        [-55, -138],
-        [-41, -98],
-        [-29, -103],
-      ],
-      "#555549",
-    );
-    poly(
-      [
-        [30, -150],
-        [49, -135],
-        [41, -90],
-        [29, -100],
-      ],
-      "#555549",
-    );
-    oval(0, -169, 24, 27, "#2a2e32");
-    poly(
-      [
-        [-25, -183],
-        [0, -201],
-        [25, -182],
-        [18, -144],
-        [0, -153],
-        [-18, -144],
-      ],
-      "#727063",
-    );
-    line(-16, -173, -4, -169, "#ec9b73", 3);
-    line(5, -169, 16, -173, "#ec9b73", 3);
-    if (boss) {
-      poly(
-        [
-          [-19, -191],
-          [-41, -216],
-          [-31, -178],
-        ],
-        "#777562",
-      );
-      poly(
-        [
-          [19, -191],
-          [41, -216],
-          [31, -178],
-        ],
-        "#777562",
-      );
-      oval(0, -118, 8 + Math.sin(t * 3) * 2, 12, "#d88760");
+  function backgroundSprite(id) {
+    let s = new P.Sprite(textures[id]);
+    s.width = W + 40;
+    s.height = H + 24;
+    s.position.set(-20, -12);
+    return s;
+  }
+  let painted, oldBackdrop, fore, shade;
+  function makeScene() {
+    backgrounds = new P.Container();
+    actors = new P.Container();
+    foregrounds = new P.Container();
+    effects = new P.Container();
+    selection = new P.Graphics();
+    root.addChild(backgrounds, selection, actors, foregrounds, effects);
+    actors.sortableChildren = true;
+    painted = backgroundSprite("aqueduct");
+    backgrounds.addChild(painted);
+    oldBackdrop = new P.Sprite(P.Texture.from(LegacyScene.backdrop()));
+    oldBackdrop.width = W;
+    oldBackdrop.height = H;
+    backgrounds.addChild(oldBackdrop);
+    // Independent illustrated near plane. Its center is genuinely transparent.
+    fore = backgroundSprite("foreground");
+    fore.width = W + 300;
+    foregrounds.addChild(fore);
+    fore.alpha = 0.85;
+    // A restrained UI vignette leaves the painted stage visible.
+    const canvas = document.createElement("canvas");
+    canvas.width = 8;
+    canvas.height = 900;
+    const ctx = canvas.getContext("2d");
+    let grad = ctx.createLinearGradient(0, 0, 0, 900);
+    grad.addColorStop(0, "#07121ad9");
+    grad.addColorStop(0.25, "#07121a10");
+    grad.addColorStop(0.58, "#07121a00");
+    grad.addColorStop(1, "#07121aee");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 8, 900);
+    shade = new P.Sprite(P.Texture.from(canvas));
+    shade.width = W;
+    shade.height = H;
+    foregrounds.addChild(shade);
+    ids.forEach((id, i) => {
+      let hero = new CharacterView(id, i);
+      heroes.push(hero);
+      actors.addChild(hero);
+    });
+    paintPortraits();
+  }
+  function syncEnemies(b) {
+    if (currentBattle === b) return;
+    currentBattle = b;
+    for (const view of enemyViews) {
+      actors.removeChild(view);
+      view.destroy();
     }
-    if (archer) {
-      c.strokeStyle = "#b69d77";
-      c.lineWidth = 4;
-      c.beginPath();
-      c.ellipse(57, -134, 27, 62, 0, -1.5, 1.5);
-      c.stroke();
-      line(58, -195, 58, -73, "#b6c2ad", 1);
-      line(34, -130, 91, -130, "#b6c2ad", 2);
-    } else if (stalker) {
-      poly(
-        [
-          [38, -103],
-          [57, -142],
-          [53, -91],
-        ],
-        "#bbb9a0",
-      );
-      poly(
-        [
-          [-38, -100],
-          [-57, -140],
-          [-54, -87],
-        ],
-        "#bbb9a0",
-      );
-    } else {
-      line(45, -110, 67, -203, "#858576", 5);
-      if (acolyte) {
-        oval(67, -210, 12, 17, "#d69f7a");
-        oval(67, -210, 6, 9, "#ffdbc0");
-      } else
-        poly(
-          [
-            [67, -203],
-            [79, -230],
-            [82, -192],
-          ],
-          "#bbb99d",
+    enemyViews = [];
+    if (!b) return;
+    for (const [i, e] of b.enemies.entries()) {
+      if (!enemyTextures.has(e.name))
+        enemyTextures.set(
+          e.name,
+          P.Texture.from(LegacyScene.enemyTexture(e.name)),
         );
+      let view = new P.Sprite(enemyTextures.get(e.name));
+      view.anchor.set(120 / 260, 345 / 360);
+      view.position.set(1020 + i * 155, 550 + i * 17);
+      view.zIndex = view.y;
+      actors.addChild(view);
+      enemyViews.push(view);
     }
-    c.restore();
   }
-  function draw() {
-    if (
-      canvas.width !== Math.round(innerWidth * devicePixelRatio) ||
-      canvas.height !== Math.round(innerHeight * devicePixelRatio)
-    ) {
-      canvas.width = innerWidth * devicePixelRatio;
-      canvas.height = innerHeight * devicePixelRatio;
+  function spawn(x, y, index, kind) {
+    if (!motion()) return;
+    const palette = data.characters[ids[index]].palette;
+    for (let i = 0; i < (kind === "ultimate" ? 70 : 38); i++) {
+      const a = i * 2.39996,
+        speed = 35 + (i % 9) * 22;
+      particles.push({
+        x,
+        y,
+        vx: Math.cos(a) * speed,
+        vy: Math.sin(a) * speed - 30,
+        age: 0,
+        life: 0.35 + (i % 6) * 0.12,
+        color: hex(palette[i % palette.length]),
+        size: 1.5 + (i % 3),
+      });
     }
-    c.setTransform(
-      (devicePixelRatio * innerWidth) / W,
-      0,
-      0,
-      (devicePixelRatio * innerHeight) / H,
-      0,
-      0,
-    );
-    t = window.reduceMotion ? 0 : performance.now() / 1000;
-    let g = c.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, "#101f2b");
-    g.addColorStop(0.5, "#34434a");
-    g.addColorStop(1, "#101d24");
-    c.fillStyle = g;
-    c.fillRect(0, 0, W, H);
-    oval(925, 230, 110, 110, "#a0a89418");
-    for (let k = 0; k < 3; k++) {
-      let bottom = 470 + k * 55;
-      for (let i = 0; i < 13; i++) {
-        let x = i * 137 + (k % 2) * 51;
-        poly(
-          [
-            [x, bottom],
-            [x + 17, 240 + k * 55 + ((i * 37) % 90)],
-            [x + 45, 210 + k * 64],
-            [x + 72, 280 + k * 35],
-            [x + 110, bottom],
-          ],
-          ["#263941", "#293b40", "#2c3d40"][k],
-        );
+    if (particles.length > 180) particles.splice(0, particles.length - 180);
+  }
+  function floatText(x, y, value, color = 0xf0d6a4) {
+    feedback.push({ x, y, value, color, age: 0 });
+  }
+  const strokes = new P.Graphics();
+  let texts = [];
+  function drawEffects(dt) {
+    strokes.clear();
+    for (let i = particles.length - 1; i >= 0; i--) {
+      let p = particles[i];
+      p.age += dt;
+      if (p.age > p.life) {
+        particles.splice(i, 1);
+        continue;
+      }
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 50 * dt;
+      strokes
+        .beginFill(p.color, 1 - p.age / p.life)
+        .drawCircle(p.x, p.y, p.size)
+        .endFill();
+    }
+    // Ambient fireflies and haze are independent of the painted layers.
+    for (let i = 0; i < 26; i++) {
+      let x = (i * 163.9 + time * 4) % W,
+        y = 260 + ((i * 79) % 280) + Math.sin(time + i) * 8;
+      strokes
+        .beginFill(0xd7c08a, 0.25 + Math.sin(time * 2 + i) * 0.12)
+        .drawCircle(x, y, 1 + (i % 2))
+        .endFill();
+    }
+    if (activeAction && motion()) {
+      let a = activeAction,
+        progress = (performance.now() - a.start) / 850,
+        col = hex(data.characters[ids[a.hero]].palette[0]);
+      let x = 1020 + a.target * 155,
+        y = 405;
+      if (progress > 0.2 && progress < 0.85 && a.kind !== "defense") {
+        if (a.hero === 0) {
+          for (let k = 0; k < 4; k++) {
+            strokes.lineStyle(2, hex(data.characters.tristan.palette[k]), 0.5);
+            for (let j = 0; j < 25; j++) {
+              let angle = j * 0.3 + time * 8 + k,
+                r = 45 + k * 13 + Math.sin(j + k) * 7;
+              let px = x + Math.cos(angle) * r,
+                py = y + Math.sin(angle) * r * 0.7;
+              j ? strokes.lineTo(px, py) : strokes.moveTo(px, py);
+            }
+          }
+        }
+        if (a.hero === 1) {
+          strokes.lineStyle(2, col, 0.7);
+          strokes.moveTo(heroes[1].x, 425);
+          for (let j = 0; j < 12; j++)
+            strokes.lineTo(
+              heroes[1].x + ((x - heroes[1].x) * j) / 11,
+              425 + Math.sin(j * 13 + time * 60) * 12,
+            );
+        }
+        if (a.hero === 2) {
+          for (let k = 0; k < 6; k++)
+            strokes
+              .lineStyle(1, 0xc6b292, 0.65)
+              .moveTo(heroes[2].x + 25, 410 + k * 2)
+              .lineTo(x + Math.cos(k) * 45, y + Math.sin(k) * 55);
+        }
       }
     }
-    for (let side of [0, 1]) {
-      c.save();
-      c.translate(side ? W : 0, 0);
-      c.scale(side ? -1 : 1, 1);
-      poly(
-        [
-          [0, 0],
-          [190, 0],
-          [168, 100],
-          [151, 102],
-          [139, 520],
-          [205, 565],
-          [0, 610],
-        ],
-        "#14242b",
-      );
-      for (let i = 0; i < 7; i++)
-        line(10, 130 + i * 58, 146, 132 + i * 58, "#40505655", 2);
-      poly(
-        [
-          [160, 93],
-          [510, 120],
-          [505, 143],
-          [176, 124],
-        ],
-        "#22343b",
-      );
-      poly(
-        [
-          [178, 131],
-          [212, 134],
-          [181, 242],
-        ],
-        "#23353c",
-      );
-      c.restore();
+    for (let t of texts) t.destroy();
+    texts = [];
+    for (let i = feedback.length - 1; i >= 0; i--) {
+      const f = feedback[i];
+      f.age += dt;
+      if (f.age > 1) {
+        feedback.splice(i, 1);
+        continue;
+      }
+      let label = new P.Text(f.value, {
+        fontFamily: "Georgia",
+        fontSize: 27,
+        fill: f.color,
+        stroke: 0x10202a,
+        strokeThickness: 4,
+      });
+      label.anchor.set(0.5);
+      label.position.set(f.x, f.y - f.age * 35);
+      label.alpha = Math.min(1, (1 - f.age) * 3);
+      effects.addChild(label);
+      texts.push(label);
     }
-    poly(
-      [
-        [0, 570],
-        [500, 500],
-        [990, 520],
-        [1440, 570],
-        [1440, 900],
-        [0, 900],
-      ],
-      "#202d31",
-    );
-    for (let i = 0; i < 20; i++) {
-      let y = 530 + i * i * 1.2;
-      line(0, y, W, y + 10, "#64716b18");
-    }
-    for (let i = 0; i < 15; i++)
-      line(i * 140 - 280, 900, 720 + (i - 7) * 30, 510, "#71807815");
-    for (let i = 0; i < 45; i++) {
-      let x = (i * 127.7 + t * (6 + (i % 3))) % W,
-        y = 180 + ((i * 61) % 480) + Math.sin(t + i) * 15;
-      oval(x, y, i % 3 ? 1 : 2, 1, "#d4b78055");
-    }
+    diagnostics.particles = particles.length;
+  }
+  function update() {
+    const now = performance.now(),
+      dt = Math.min(0.05, pixi.ticker.elapsedMS / 1000);
+    time = motion() ? time + dt : 0;
     let b = window.currentBattle;
-    let menu = !b;
-    let positions = menu
+    syncEnemies(b);
+    let illustrated = !b || b.mission === 0;
+    painted.visible = illustrated;
+    oldBackdrop.visible = !illustrated;
+    fore.visible = illustrated;
+    const scene = b ? "battle" : "menu";
+    if (scene !== previousScene) {
+      activeAction = null;
+      previousScene = scene;
+      heroes.forEach((h) => (h.transientUntil = 0));
+    }
+    livePointer.x += (pointer.x - livePointer.x) * 0.04;
+    livePointer.y += (pointer.y - livePointer.y) * 0.04;
+    painted.y = b ? -80 : -12;
+    painted.x =
+      -20 + (motion() ? Math.sin(time * 0.12) * 4 + livePointer.x * 3 : 0);
+    fore.x =
+      -150 + (motion() ? Math.sin(time * 0.12) * 9 + livePointer.x * 11 : 0);
+    fore.y = (b ? -45 : -12) + (motion() ? livePointer.y * 4 : 0);
+    const positions = b
       ? [
-          [880, 675],
-          [1060, 700],
-          [1235, 680],
+          [245, 550],
+          [430, 555],
+          [620, 550],
         ]
       : [
-          [270, 583],
-          [420, 615],
-          [560, 595],
+          [820, 700],
+          [990, 717],
+          [1155, 700],
         ];
-    positions.forEach((p, i) => {
-      let off = 0;
-      if (fx && fx.hero === i) {
-        let age = (performance.now() - fx.start) / 850;
-        if (age < 1 && !window.reduceMotion)
-          off =
-            fx.hero === 2
-              ? Math.sin(age * Math.PI) * 15
-              : Math.sin(age * Math.PI) * (fx.hero === 1 ? 530 : 380);
-        else if (age >= 1) fx = null;
-      }
-      person(
-        p[0] + off,
-        p[1],
-        ["tristan", "roy", "niek"][i],
-        menu ? 1.35 : 1.05,
-        b?.active === i && b?.phase === "player",
-        b?.heroes[i].hp <= 0,
-      );
-    });
-    if (b)
-      b.enemies.forEach((e, i) => enemy(1000 + i * 155, 590 + i * 20, i, b));
-    if (fx && !window.reduceMotion) {
-      let age = (performance.now() - fx.start) / 850;
-      if (age < 1) {
-        let col = ["#a6a45f", "#9ecde7", "#ba9693"][fx.hero];
-        let x = 1000 + fx.target * 155,
-          y = 450;
-        c.globalAlpha = Math.sin(age * Math.PI);
-        if (fx.hero === 0) {
-          for (let k = 0; k < 6; k++) {
-            c.beginPath();
-            c.strokeStyle = ["#7f8750", "#897342", "#d1bd79"][k % 3];
-            c.lineWidth = 2 + (k % 2);
-            for (let n = 0; n < 35; n++) {
-              let a = n * 0.3 + age * 6 + k;
-              let r = 50 + k * 12 + Math.sin(n * 2 + k) * 12;
-              let px = x + Math.cos(a) * r,
-                py = y + Math.sin(a) * r * 0.8;
-              n ? c.lineTo(px, py) : c.moveTo(px, py);
-            }
-            c.stroke();
-          }
-        } else if (fx.hero === 1) {
-          for (let k = 0; k < 5; k++)
-            line(
-              420 + age * 600 - k * 35,
-              470 + k * 8,
-              x,
-              450 + k * 5,
-              "#b0d9ea66",
-              3,
-            );
-          if (fx.kind === "cat") {
-            poly(
-              [
-                [x - 70, y + 40],
-                [x - 45, y + 13],
-                [x - 22, y + 26],
-                [x + 15, y + 12],
-                [x + 30, y - 10],
-                [x + 38, y + 8],
-                [x + 53, y - 8],
-                [x + 55, y + 24],
-                [x + 30, y + 44],
-                [x + 10, y + 46],
-                [x + 2, y + 66],
-                [x - 8, y + 46],
-                [x - 35, y + 44],
-                [x - 47, y + 65],
-                [x - 51, y + 40],
-              ],
-              "#a8d5e7",
-            );
-            line(x - 68, y + 39, x - 100, y + 12, "#a8d5e7", 5);
-          }
+    selection.clear();
+    heroes.forEach((hero, i) => {
+      let [x, y] = positions[i],
+        down = b?.heroes[i].hp <= 0;
+      hero.position.set(x, y + (motion() ? Math.sin(time * 1.8 + i) * 1.4 : 0));
+      hero.scale.set(((b ? 1 : 1.18) * hero.config.height) / 650);
+      hero.zIndex = y;
+      const guard = b?.heroes[i].guard || false;
+      hero.update(now, guard, down);
+      if (activeAction?.hero === i) {
+        const a = activeAction,
+          age = (now - a.start) / 850;
+        if (age >= 1) {
+          activeAction = null;
+          hero.transientUntil = 0;
         } else {
-          for (let k = 0; k < 8; k++)
-            line(
-              610,
-              500 + k * 3,
-              x + Math.cos(k) * 70,
-              y + Math.sin(k) * 60,
-              "#c9b6a499",
-              1,
+          let swing = Math.sin(Math.min(1, age) * Math.PI);
+          if (motion() && !["defense", "heal", "teamguard"].includes(a.kind))
+            hero.x +=
+              swing *
+              (i === 2 ? 20 : Math.min(500, 1020 + a.target * 155 - x - 120));
+          if (!a.emitted && age > 0.3) {
+            const supportive = ["defense", "heal", "teamguard"].includes(
+              a.kind,
             );
-          if (fx.kind === "poison") {
-            for (let k = 0; k < 15; k++)
-              oval(
-                x + Math.sin(k * 5) * 55,
-                y + Math.cos(k * 3 + age * 3) * 65,
-                10,
-                12,
-                "#9ca77955",
-              );
+            spawn(
+              supportive ? hero.x : 1020 + a.target * 155,
+              supportive ? hero.y - 130 : 405,
+              i,
+              a.kind,
+            );
+            a.emitted = true;
           }
         }
-        for (let j = 0; j < 18; j++) {
-          let angle = j * 2.4;
-          let r = age * 160;
-          line(
-            x + Math.cos(angle) * r * 0.3,
-            y + Math.sin(angle) * r * 0.3,
-            x + Math.cos(angle) * r,
-            y + Math.sin(angle) * r,
-            col,
-            2 + (j % 3),
-          );
-        }
-        c.globalAlpha = 1;
       }
-    }
-    let shade = c.createLinearGradient(0, 450, 0, 900);
-    shade.addColorStop(0, "#07111800");
-    shade.addColorStop(1, "#071118f5");
-    c.fillStyle = shade;
-    c.fillRect(0, 450, W, 450);
-    requestAnimationFrame(draw);
+      selection
+        .beginFill(0x071019, 0.3)
+        .drawEllipse(x, y + 3, 48, 9)
+        .endFill();
+      if (b?.active === i && !down) {
+        selection
+          .lineStyle(1.5, hex(hero.config.palette[0]), 0.9)
+          .drawEllipse(x, y + 3, 52, 11);
+        selection.lineStyle(0);
+      }
+    });
+    enemyViews.forEach((view, i) => {
+      view.alpha = b.enemies[i].hp > 0 ? 1 : 0.22;
+      view.y = 550 + i * 17 + (motion() ? Math.sin(time * 2 + i) * 2 : 0);
+    });
+    drawEffects(dt);
   }
-  draw();
+  function paintPortraits() {
+    if (!images.tristan) return;
+    document.querySelectorAll("canvas[data-portrait]").forEach((canvas) => {
+      const id = ids[Number(canvas.dataset.portrait)],
+        im = images[id],
+        ctx = canvas.getContext("2d");
+      let box = {
+        tristan: [95, 5, 210, 230],
+        roy: [90, 40, 210, 230],
+        niek: [80, 5, 230, 250],
+      }[id];
+      ctx.fillStyle = "#23323a";
+      ctx.fillRect(0, 0, 64, 64);
+      ctx.drawImage(im, ...box, 0, 0, 64, 64);
+    });
+  }
+  api.paintPortraits = paintPortraits;
+  window.choreograph = (hero, target, kind) => {
+    if (!diagnostics.ready) return;
+    const state =
+      kind === "defense"
+        ? "defense"
+        : ["basic", "burst"].includes(kind)
+          ? "attack"
+          : "special";
+    heroes[hero].transient(state, 850);
+    activeAction = {
+      hero,
+      target: Math.max(0, target),
+      kind,
+      start: performance.now(),
+      emitted: false,
+    };
+  };
+  api.reactToEnemy = (before, b) => {
+    if (!diagnostics.ready) return;
+    b.heroes.forEach((h, i) => {
+      let damage = before[i] - h.hp;
+      if (damage > 0) {
+        heroes[i].transient("damage", 650);
+        floatText(heroes[i].x, 340, "−" + damage, 0xe5a18b);
+      }
+    });
+  };
+  api.playState = (id, state) => {
+    const h = heroes[ids.indexOf(id)];
+    if (!h || !data.animations[state]) return false;
+    h.transient(state, 1500);
+    return true;
+  };
+  api.ready = (async () => {
+    try {
+      const forceCanvas =
+        new URLSearchParams(location.search).get("renderer") === "canvas";
+      pixi = new P.Application({
+        view: document.querySelector("#world"),
+        width: W,
+        height: H,
+        backgroundAlpha: 0,
+        antialias: true,
+        resolution: Math.min(devicePixelRatio, 2),
+        autoDensity: true,
+        forceCanvas: forceCanvas || !P.utils.isWebGLSupported(),
+      });
+      diagnostics.backend =
+        pixi.renderer.type === P.RENDERER_TYPE.WEBGL ? "WebGL" : "Canvas";
+      pixi.ticker.maxFPS = 30;
+      root = new P.Container();
+      pixi.stage.addChild(root);
+      function resize() {
+        pixi.renderer.resize(innerWidth, innerHeight);
+        root.scale.set(innerWidth / W, innerHeight / H);
+      }
+      resize();
+      addEventListener("resize", resize);
+      addEventListener("pointermove", (e) => {
+        pointer.x = e.clientX / innerWidth - 0.5;
+        pointer.y = e.clientY / innerHeight - 0.5;
+      });
+      await Promise.all(
+        Object.entries(data.images).map(([id, src]) => loadImage(id, src)),
+      );
+      makeScene();
+      effects.addChild(strokes);
+      diagnostics.ready = true;
+      status.hidden = true;
+      pixi.ticker.add(update);
+      paintPortraits();
+      return diagnostics;
+    } catch (e) {
+      diagnostics.errors.push(e.message);
+      status.textContent = "Illustrated artwork could not load. " + e.message;
+      status.classList.add("failed");
+      throw e;
+    }
+  })();
 })();

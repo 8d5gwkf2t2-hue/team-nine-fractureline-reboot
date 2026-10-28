@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "images": {
+    "tristan": "characters/tristan.png",
+    "roy": "characters/roy.png",
+    "niek": "characters/niek.png",
+    "aqueduct": "environments/aqueduct.png",
+    "foreground": "environments/foreground.png"
+  },
+  "characters": {
+    "tristan": {
+      "height": 325,
+      "palette": ["#7b8646", "#82613d", "#c0a361", "#d5c384"],
+      "frames": {
+        "idle": {
+          "rect": [0, 0, 348, 714],
+          "pivot": [194, 672]
+        },
+        "attack": {
+          "rect": [348, 0, 580, 714],
+          "pivot": [290, 672],
+          "mask": [
+            0, 0, 530, 0, 530, 150, 580, 150, 580, 240, 550, 240, 550, 714, 0,
+            714
+          ]
+        },
+        "damage": {
+          "rect": [898, 0, 376, 714],
+          "pivot": [180, 672]
+        },
+        "defense": {
+          "rect": [1274, 0, 375, 714],
+          "pivot": [180, 672]
+        },
+        "special": {
+          "rect": [1649, 0, 553, 714],
+          "pivot": [275, 672]
+        }
+      }
+    },
+    "roy": {
+      "height": 295,
+      "palette": ["#a3c7de", "#d1e4ee", "#718fa9"],
+      "frames": {
+        "idle": {
+          "rect": [0, 0, 314, 724],
+          "pivot": [165, 667]
+        },
+        "attack": {
+          "rect": [314, 0, 605, 724],
+          "pivot": [325, 667]
+        },
+        "damage": {
+          "rect": [919, 0, 304, 724],
+          "pivot": [150, 667],
+          "mask": [
+            0, 0, 304, 0, 304, 724, 0, 724, 0, 420, 60, 420, 60, 150, 0, 150
+          ]
+        },
+        "defense": {
+          "rect": [1223, 0, 350, 724],
+          "pivot": [175, 667]
+        },
+        "special": {
+          "rect": [1573, 0, 599, 724],
+          "pivot": [265, 667]
+        }
+      }
+    },
+    "niek": {
+      "height": 310,
+      "palette": ["#b39c7c", "#927da4", "#7b9169"],
+      "frames": {
+        "idle": {
+          "rect": [0, 0, 365, 724],
+          "pivot": [180, 675],
+          "mask": [0, 0, 365, 0, 365, 300, 247, 300, 247, 724, 0, 724],
+          "layers": [
+            {
+              "name": "marionette",
+              "rect": [247, 300, 118, 424],
+              "offset": [67, -375],
+              "pivot": [0, 0],
+              "motion": "pendulum"
+            }
+          ]
+        },
+        "attack": {
+          "rect": [365, 0, 515, 724],
+          "pivot": [280, 675]
+        },
+        "damage": {
+          "rect": [880, 0, 417, 724],
+          "pivot": [175, 675],
+          "mask": [
+            0, 0, 417, 0, 417, 724, 0, 724, 0, 460, 75, 460, 75, 300, 0, 300
+          ]
+        },
+        "defense": {
+          "rect": [1297, 0, 385, 724],
+          "pivot": [165, 675]
+        },
+        "special": {
+          "rect": [1682, 0, 490, 724],
+          "pivot": [210, 675]
+        }
+      }
+    }
+  },
+  "animations": {
+    "idle": {
+      "frames": ["idle"],
+      "fps": 6,
+      "loop": true
+    },
+    "attack": {
+      "frames": ["idle", "attack", "attack", "idle"],
+      "fps": 7,
+      "loop": false
+    },
+    "damage": {
+      "frames": ["damage", "damage", "idle"],
+      "fps": 7,
+      "loop": false
+    },
+    "defense": {
+      "frames": ["defense"],
+      "fps": 6,
+      "loop": true
+    },
+    "special": {
+      "frames": ["idle", "special", "special", "special", "idle"],
+      "fps": 7,
+      "loop": false
+    }
+  }
+}
