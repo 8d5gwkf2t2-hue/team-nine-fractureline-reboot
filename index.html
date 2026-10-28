@@ -1,0 +1,2002 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Team Nine · Fractureline</title>
+    <style>
+:root {
+  --ink: #0b171e;
+  --panel: #12232cef;
+  --line: #60716b55;
+  --gold: #cfbb86;
+  --text: #e9e8dc;
+  --muted: #9aacae;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--text);
+  font:
+    14px "Segoe UI",
+    sans-serif;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+  color: inherit;
+  background: #182c35;
+  border: 1px solid var(--line);
+  padding: 12px 18px;
+  transition: 0.2s;
+}
+button:hover:not(:disabled) {
+  background: #31454b;
+  border-color: var(--gold);
+  transform: translateY(-2px);
+}
+button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+#app {
+  min-height: 100vh;
+  padding: 28px 4vw;
+}
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 17px;
+}
+.brand {
+  font-size: 12px;
+  letter-spacing: 4px;
+  color: var(--gold);
+}
+.tag {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+}
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+h1,
+h2 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+}
+h1 {
+  font-size: clamp(52px, 7.5vw, 110px);
+  line-height: 0.96;
+  letter-spacing: -3px;
+  margin: 22px 0;
+}
+h2 {
+  font-size: 38px;
+  margin-bottom: 12px;
+}
+h3 {
+  font-size: 18px;
+  font-weight: 500;
+}
+.eyebrow {
+  color: var(--gold);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+.muted {
+  color: var(--muted);
+  line-height: 1.65;
+}
+.hero-copy {
+  max-width: 550px;
+  margin-top: 8vh;
+}
+.hero-copy p {
+  max-width: 380px;
+}
+.primary {
+  background: var(--gold);
+  color: #17242a;
+  border-color: var(--gold);
+}
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  width: 260px;
+  margin-top: 32px;
+}
+.menu-actions button {
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+}
+.foot {
+  position: fixed;
+  bottom: 24px;
+  left: 4vw;
+  right: 4vw;
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 24px;
+  backdrop-filter: blur(12px);
+}
+.screen {
+  margin-top: 25px;
+}
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 25px;
+}
+.mission {
+  min-height: 310px;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(145deg, #1d333bd9, #10212aee);
+}
+.mission .number {
+  font: 60px Georgia;
+  color: #8a998a55;
+}
+.mission button {
+  margin-top: auto;
+}
+.mission p {
+  min-height: 70px;
+}
+.badge {
+  color: var(--gold);
+  font-size: 11px;
+}
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin: 20px 0;
+}
+.tabs .chosen {
+  border-color: var(--gold);
+  background: #394740;
+}
+.nodes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.node {
+  min-height: 130px;
+  text-align: left;
+}
+.node b,
+.node span {
+  display: block;
+  margin-bottom: 8px;
+}
+.node.owned {
+  border-color: var(--gold);
+  background: #3d493c;
+}
+.combat-title {
+  margin-top: 24px;
+  display: flex;
+  justify-content: space-between;
+}
+.timeline {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  margin-top: 15px;
+}
+.turn {
+  padding: 8px 14px;
+  background: #15272fe8;
+  border: 1px solid var(--line);
+  font-size: 11px;
+}
+.turn.active {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.telegraphs {
+  position: absolute;
+  top: 27%;
+  right: 5%;
+  display: flex;
+  gap: 12px;
+  max-width: 39%;
+}
+.enemy {
+  width: 165px;
+  padding: 12px;
+  background: #18252bdc;
+  border: 1px solid #ad8d7055;
+  text-align: left;
+}
+.enemy.selected {
+  border-color: var(--gold);
+}
+.enemy strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.enemy small {
+  display: block;
+  color: #e1a98a;
+  font-size: 10px;
+  margin-top: 8px;
+}
+.bar {
+  height: 4px;
+  background: #070f16;
+  margin: 7px 0;
+  overflow: hidden;
+}
+.bar i {
+  display: block;
+  height: 100%;
+  background: #91ad9b;
+  transition: width 0.3s;
+}
+.bar.chakra i {
+  background: #7599a5;
+}
+.battle-bottom {
+  position: absolute;
+  bottom: 24px;
+  left: 4vw;
+  right: 4vw;
+}
+.party {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+  width: 65%;
+}
+.hero-card {
+  padding: 12px 15px;
+  background: #11232bf2;
+  border: 1px solid var(--line);
+}
+.hero-card.active {
+  border-top: 2px solid var(--gold);
+}
+.hero-card header {
+  display: flex;
+  justify-content: space-between;
+}
+.hero-card small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.commands {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 14px;
+}
+.abilities {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.ability {
+  padding: 12px;
+  text-align: left;
+  flex: 1;
+  min-width: 125px;
+}
+.ability b {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+.ability small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 9px 0;
+}
+.log {
+  height: 122px;
+  overflow: auto;
+  font-size: 11px;
+  line-height: 1.7;
+  color: #a3b4b3;
+  padding: 12px 16px;
+  background: #0c1b24ee;
+  border: 1px solid var(--line);
+}
+.result {
+  max-width: 660px;
+  margin: 8vh auto;
+}
+.modal {
+  position: fixed;
+  inset: 0;
+  background: #07121bdc;
+  display: grid;
+  place-items: center;
+  z-index: 5;
+}
+.modal .panel {
+  max-width: 620px;
+  max-height: 90vh;
+  overflow: auto;
+  margin: 15px;
+}
+.notice {
+  position: fixed;
+  top: 95px;
+  right: 4vw;
+  background: #243b40;
+  border: 1px solid var(--gold);
+  padding: 14px;
+  z-index: 10;
+  max-width: 400px;
+}
+select {
+  background: #192f38;
+  color: var(--text);
+  padding: 10px;
+  border: 1px solid var(--line);
+}
+.equipment {
+  margin-top: 20px;
+}
+.status {
+  font-size: 11px;
+  color: var(--gold);
+}
+@media (max-width: 850px) {
+  #app {
+    padding: 18px;
+  }
+  .cards {
+    gap: 8px;
+  }
+  .panel {
+    padding: 16px;
+  }
+  .commands {
+    grid-template-columns: 1fr;
+  }
+  .log {
+    display: none;
+  }
+  .party {
+    width: 100%;
+  }
+  .telegraphs {
+    top: 23%;
+    max-width: 50%;
+    right: 15px;
+  }
+  .enemy {
+    width: 130px;
+  }
+  .battle-bottom {
+    left: 15px;
+    right: 15px;
+    bottom: 15px;
+  }
+  .ability {
+    min-width: 100px;
+  }
+  .hero-card {
+    padding: 8px;
+  }
+  .nodes {
+    gap: 7px;
+  }
+  .hero-copy {
+    margin-top: 8vh;
+  }
+  .foot {
+    position: static;
+    margin-top: 30px;
+  }
+  .combat-title h2 {
+    font-size: 25px;
+  }
+}
+@media (max-height: 720px) {
+  .battle-bottom {
+    bottom: 10px;
+  }
+  .hero-card {
+    padding: 8px;
+  }
+  .commands .panel {
+    padding: 10px;
+  }
+  .combat-title {
+    margin-top: 10px;
+  }
+  .telegraphs {
+    top: 23%;
+  }
+  .hero-copy {
+    margin-top: 5vh;
+  }
+  .hero-copy h1 {
+    font-size: 65px;
+  }
+  .menu-actions {
+    margin-top: 15px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none;
+  }
+}
+
+.hero-copy {
+  max-width: 760px;
+}
+.hero-copy h1 {
+  font-size: clamp(52px, 5.5vw, 80px);
+  letter-spacing: -2px;
+}
+.hero-copy p {
+  max-width: 420px;
+}
+.hero-copy .menu-actions {
+  margin-top: 25px;
+}
+.hero-copy h1 em {
+  display: inline;
+}
+@media (max-width: 850px) {
+  .hero-copy {
+    max-width: 600px;
+  }
+  .hero-copy h1 {
+    font-size: 56px;
+  }
+}
+
+.portrait {
+  width: 35px;
+  height: 35px;
+  border: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.node.owned:disabled {
+  opacity: 0.85;
+}
+.hero-card header .row {
+  gap: 9px;
+}
+
+</style>
+  </head>
+  <body>
+    <canvas id="world" aria-label="Animated side-view battlefield"></canvas>
+    <div id="app"></div>
+    <script>
+/* Pure combat and progression rules. Shared by the browser and Node tests. */
+(function (root) {
+  const HEROES = [
+    {
+      id: "tristan",
+      name: "Tristan",
+      role: "KINETIC VANGUARD",
+      color: "#b9b36c",
+      resource: "Momentum",
+      hp: 150,
+      atk: 22,
+    },
+    {
+      id: "roy",
+      name: "Roy",
+      role: "STORM RUNNER",
+      color: "#8db9d0",
+      resource: "Charge",
+      hp: 115,
+      atk: 20,
+    },
+    {
+      id: "niek",
+      name: "Niek",
+      role: "THREAD ARCHITECT",
+      color: "#c5a08c",
+      resource: "Threads",
+      hp: 125,
+      atk: 18,
+    },
+  ];
+  const ABILITIES = {
+    tristan: [
+      ["Drive strike", 0, 1, "Build 1 Momentum. Recover 5 chakra.", "basic"],
+      ["Propulsion", 15, 1.7, "Spend 2 Momentum for +60% damage.", "burst"],
+      [
+        "Retraction",
+        18,
+        1.05,
+        "Interrupt: remove 2 enemy wind-up.",
+        "interrupt",
+      ],
+      [
+        "Iron resolve",
+        12,
+        0,
+        "Guard the whole team for the next hit.",
+        "teamguard",
+      ],
+      [
+        "Faultbreaker",
+        30,
+        2.6,
+        "Unlocked: 2 wind-up break + exposed.",
+        "ultimate",
+      ],
+    ],
+    roy: [
+      ["Flash cut", 0, 1, "Build 1 Charge. Recover 5 chakra.", "basic"],
+      [
+        "Thunderclaw",
+        15,
+        1.5,
+        "Lightning-cat strike. +50% vs poisoned targets.",
+        "cat",
+      ],
+      [
+        "Static snare",
+        18,
+        0.8,
+        "Interrupt: remove 2 wind-up. Apply exposed.",
+        "interrupt",
+      ],
+      ["Storm shelter", 12, 0, "Restore 28 HP to each ally.", "heal"],
+      [
+        "Steel tempest",
+        30,
+        2.5,
+        "Unlocked: ignore armor; gain guard.",
+        "ultimate",
+      ],
+    ],
+    niek: [
+      ["Needle volley", 0, 1, "Build 1 Thread. Recover 5 chakra.", "basic"],
+      [
+        "Venom marionette",
+        14,
+        0.85,
+        "Poison: 10 damage for 3 enemy turns.",
+        "poison",
+      ],
+      ["Tripwire", 16, 0.8, "Interrupt: remove 2 wind-up.", "interrupt"],
+      ["Repair weave", 12, 0, "Restore 28 HP to each ally.", "heal"],
+      [
+        "Thousand threads",
+        30,
+        2.3,
+        "Unlocked: poison, exposed, and 2 wind-up break.",
+        "ultimate",
+      ],
+    ],
+  };
+  const MISSIONS = [
+    {
+      name: "The Broken Approach",
+      subtitle: "A patrol gone silent",
+      desc: "Find the missing scouts beneath the shattered aqueduct.",
+      enemies: [
+        ["Ash prowler", 95, 14, 1],
+        ["Rift archer", 80, 17, 2],
+      ],
+      xp: 70,
+      gold: 45,
+    },
+    {
+      name: "Threads in the Fog",
+      subtitle: "Something pulls the strings",
+      desc: "Armored sentries guard the foundry. Poison ignores their plating.",
+      enemies: [
+        ["Iron sentinel", 150, 22, 2, 6],
+        ["Venom stalker", 115, 19, 1],
+        ["Rift archer", 100, 18, 2],
+      ],
+      xp: 100,
+      gold: 70,
+    },
+    {
+      name: "The Hollow Warden",
+      subtitle: "Break the heart of the fracture",
+      desc: "Break its wind-up to stop Rupture. Below half health, its fury accelerates.",
+      enemies: [
+        ["Hollow Warden", 460, 30, 3, 7],
+        ["Ash acolyte", 120, 18, 2],
+      ],
+      xp: 150,
+      gold: 110,
+    },
+  ];
+  const NODES = [
+    {
+      name: "Sharpened intent",
+      desc: "+15% technique damage",
+      cost: 1,
+      branch: "Power",
+    },
+    {
+      name: "Deep reservoir",
+      desc: "+15 maximum chakra",
+      cost: 1,
+      branch: "Control",
+    },
+    {
+      name: "Unbroken form",
+      desc: "+30 maximum HP",
+      cost: 1,
+      branch: "Resolve",
+    },
+    {
+      name: "Signature evolution",
+      desc: "Unlock the fifth technique",
+      cost: 2,
+      requires: 0,
+      branch: "Power",
+    },
+    {
+      name: "Efficient flow",
+      desc: "Techniques cost 4 less chakra",
+      cost: 2,
+      requires: 1,
+      branch: "Control",
+    },
+    {
+      name: "Second breath",
+      desc: "Recover 8 HP after every action",
+      cost: 2,
+      requires: 2,
+      branch: "Resolve",
+    },
+  ];
+  function fresh() {
+    return {
+      version: 1,
+      gold: 0,
+      cleared: [],
+      heroes: HEROES.map((h) => ({
+        id: h.id,
+        xp: 0,
+        level: 1,
+        points: 1,
+        nodes: [],
+        gear: "Scout wraps",
+        mastery: 0,
+        masteries: [0, 0, 0, 0, 0],
+      })),
+      inventory: ["Scout wraps"],
+      settings: { sound: true, reduced: false },
+    };
+  }
+  function stats(save, i) {
+    let p = save.heroes[i],
+      h = HEROES[i];
+    return {
+      hp:
+        h.hp +
+        (p.level - 1) * 14 +
+        (p.nodes.includes(2) ? 30 : 0) +
+        (p.gear === "Warden plate" ? 35 : p.gear === "Field charm" ? 15 : 0),
+      atk: h.atk + (p.level - 1) * 3 + (p.gear === "Bronze talisman" ? 5 : 0),
+      chakra:
+        50 +
+        (p.nodes.includes(1) ? 15 : 0) +
+        (p.gear === "Field charm" ? 10 : 0),
+      armor: p.gear === "Warden plate" ? 4 : 0,
+    };
+  }
+  function battle(save, mission) {
+    return {
+      mission,
+      round: 1,
+      active: 0,
+      phase: "player",
+      selected: 0,
+      log: ["Team Nine enters the fracture."],
+      heroes: HEROES.map((h, i) => ({
+        ...h,
+        ...stats(save, i),
+        maxhp: stats(save, i).hp,
+        maxchakra: stats(save, i).chakra,
+        resourceValue: 0,
+        guard: false,
+        down: false,
+      })),
+      enemies: MISSIONS[mission].enemies.map((e, i) => ({
+        id: i,
+        name: e[0],
+        hp: e[1],
+        maxhp: e[1],
+        atk: e[2],
+        wind: e[3],
+        maxwind: e[3],
+        armor: e[4] || 0,
+        poison: 0,
+        exposed: 0,
+        guard: false,
+      })),
+      acted: [],
+      result: null,
+    };
+  }
+  function log(b, s) {
+    b.log.unshift(s);
+    b.log = b.log.slice(0, 25);
+  }
+  function act(save, b, index, target) {
+    if (b.phase !== "player" || b.result) return false;
+    let h = b.heroes[b.active],
+      p = save.heroes[b.active],
+      a = ABILITIES[h.id][index];
+    if (!a || h.hp <= 0 || (index === 4 && !p.nodes.includes(3))) return false;
+    let cost = Math.max(0, a[1] - (p.nodes.includes(4) && a[1] ? 4 : 0));
+    if (h.chakra < cost) return false;
+    let e = b.enemies[target];
+    if (a[2] && (!e || e.hp <= 0)) return false;
+    h.chakra -= cost;
+    let kind = a[4];
+    if (kind === "heal") {
+      b.heroes.forEach((x) => {
+        if (x.hp > 0) x.hp = Math.min(x.maxhp, x.hp + 28);
+        if (h.id === "niek") x.poison = 0;
+      });
+      log(b, h.name + " restores the team.");
+    } else if (kind === "teamguard") {
+      b.heroes.forEach((x) => {
+        if (x.hp > 0) x.guard = true;
+      });
+      log(b, "Team Nine braces behind Tristan.");
+    } else {
+      let mult = a[2];
+      if (kind === "burst" && h.resourceValue >= 2) {
+        mult += 0.6;
+        h.resourceValue -= 2;
+      }
+      if (kind === "cat" && e.poison) mult *= 1.5;
+      let dmg = Math.max(
+        1,
+        Math.round(
+          h.atk *
+            mult *
+            (p.nodes.includes(0) ? 1.15 : 1) *
+            (1 + Math.min((p.masteries || [])[index] || 0, 100) * 0.001) *
+            (e.exposed ? 1.25 : 1),
+        ) - (kind === "ultimate" ? 0 : e.armor),
+      );
+      e.hp = Math.max(0, e.hp - dmg);
+      log(b, h.name + " · " + a[0] + " → " + e.name + " −" + dmg);
+      if (kind === "poison" || (kind === "ultimate" && h.id === "niek"))
+        e.poison = 3;
+      if (kind === "interrupt" || kind === "ultimate") {
+        e.wind = Math.max(0, e.wind - 2);
+        log(b, e.name + " wind-up broken!");
+      }
+      if ((kind === "interrupt" && h.id === "roy") || kind === "ultimate")
+        e.exposed = 2;
+      if (kind === "ultimate" && h.id === "roy") h.guard = true;
+      if (kind === "basic") {
+        h.resourceValue = Math.min(5, h.resourceValue + 1);
+        h.chakra = Math.min(h.maxchakra, h.chakra + 5);
+      } else if (h.resourceValue >= 3 && h.id !== "tristan") {
+        h.resourceValue -= 3;
+        h.chakra = Math.min(h.maxchakra, h.chakra + 8);
+        log(b, "Flow resonance: +8 chakra.");
+      }
+    }
+    if (p.nodes.includes(5)) h.hp = Math.min(h.maxhp, h.hp + 8);
+    p.mastery++;
+    p.masteries = p.masteries || [0, 0, 0, 0, 0];
+    p.masteries[index]++;
+    advance(b);
+    return true;
+  }
+  function defend(b) {
+    if (b.phase !== "player" || b.result) return false;
+    let h = b.heroes[b.active];
+    h.guard = true;
+    h.chakra = Math.min(h.maxchakra, h.chakra + 12);
+    h.resourceValue = Math.min(5, h.resourceValue + 1);
+    log(b, h.name + " guards · +12 chakra.");
+    advance(b);
+    return true;
+  }
+  function advance(b) {
+    if (b.enemies.every((e) => e.hp <= 0)) {
+      b.result = "victory";
+      return;
+    }
+    b.acted.push(b.active);
+    let next = b.heroes.findIndex((h, i) => h.hp > 0 && !b.acted.includes(i));
+    if (next < 0) b.phase = "enemy";
+    else b.active = next;
+  }
+  function enemyTarget(b, e) {
+    const alive = b.heroes.filter((h) => h.hp > 0);
+    if (e.name === "Rift archer")
+      return alive.reduce(
+        (weak, h) => (!weak || h.hp < weak.hp ? h : weak),
+        null,
+      );
+    return alive[(b.round + e.id) % alive.length];
+  }
+  function enemyTurn(b) {
+    if (b.phase !== "enemy" || b.result) return;
+    for (let e of b.enemies) {
+      if (e.hp <= 0) continue;
+      if (e.poison) {
+        e.hp = Math.max(0, e.hp - 10);
+        e.poison--;
+        log(b, e.name + " suffers 10 poison.");
+        if (!e.hp) continue;
+      }
+      if (e.exposed) e.exposed--;
+      if (e.wind === 0) {
+        e.wind = e.maxwind;
+        log(b, e.name + " staggers; attack cancelled.");
+        continue;
+      }
+      let furious = e.name === "Hollow Warden" && e.hp < e.maxhp / 2;
+      e.wind -= furious ? 2 : 1;
+      if (e.wind <= 0) {
+        if (e.name === "Ash acolyte") {
+          const boss = b.enemies.find(
+            (x) => x.name === "Hollow Warden" && x.hp > 0,
+          );
+          if (boss) {
+            boss.hp = Math.min(boss.maxhp, boss.hp + 32);
+            e.wind = e.maxwind;
+            log(b, "Ash acolyte mends the Warden for 32 HP.");
+            continue;
+          }
+        }
+        let rupture = e.name === "Hollow Warden";
+        let alive = b.heroes.filter((h) => h.hp > 0);
+        let targets = rupture ? alive : [enemyTarget(b, e)];
+        for (let h of targets) {
+          if (!h) continue;
+          let dmg = Math.max(
+            1,
+            Math.round(e.atk * (rupture ? 1.2 : 1) * (h.guard ? 0.4 : 1)) -
+              h.armor,
+          );
+          h.hp = Math.max(0, h.hp - dmg);
+          if (e.name === "Venom stalker" && !h.guard) h.poison = 2;
+          h.guard = false;
+          log(
+            b,
+            e.name +
+              " " +
+              (rupture ? "RUPTURE" : "strikes") +
+              " → " +
+              h.name +
+              " −" +
+              dmg,
+          );
+        }
+        e.wind = e.maxwind;
+      } else log(b, e.name + " gathers force.");
+    }
+    for (const h of b.heroes) {
+      if (h.hp > 0 && h.poison) {
+        h.hp = Math.max(0, h.hp - 6);
+        h.poison--;
+        log(b, h.name + " suffers 6 venom damage.");
+      }
+    }
+    if (b.heroes.every((h) => h.hp <= 0)) b.result = "defeat";
+    else if (b.enemies.every((e) => e.hp <= 0)) b.result = "victory";
+    else {
+      b.round++;
+      b.acted = [];
+      b.active = b.heroes.findIndex((h) => h.hp > 0);
+      b.phase = "player";
+      b.heroes.forEach((h) => (h.chakra = Math.min(h.maxchakra, h.chakra + 3)));
+    }
+  }
+  function reward(save, b) {
+    if (b.result !== "victory" || b.rewarded) return;
+    b.rewarded = true;
+    let m = MISSIONS[b.mission];
+    save.gold += m.gold;
+    for (let p of save.heroes) {
+      p.xp += m.xp;
+      while (p.xp >= p.level * 60) {
+        p.xp -= p.level * 60;
+        p.level++;
+        p.points += 2;
+      }
+    }
+    if (!save.cleared.includes(b.mission)) save.cleared.push(b.mission);
+    let item = ["Bronze talisman", "Field charm", "Warden plate"][b.mission];
+    if (!save.inventory.includes(item)) save.inventory.push(item);
+  }
+  function unlock(s, i, n) {
+    let p = s.heroes[i],
+      node = NODES[n];
+    if (
+      !node ||
+      p.nodes.includes(n) ||
+      p.points < node.cost ||
+      (node.requires !== undefined && !p.nodes.includes(node.requires))
+    )
+      return false;
+    p.points -= node.cost;
+    p.nodes.push(n);
+    return true;
+  }
+  const api = {
+    HEROES,
+    ABILITIES,
+    MISSIONS,
+    NODES,
+    fresh,
+    stats,
+    battle,
+    act,
+    defend,
+    enemyTurn,
+    enemyTarget,
+    reward,
+    unlock,
+  };
+  root.Nine = api;
+  if (typeof module !== "undefined") module.exports = api;
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+    <script>
+/* Offline procedural art: painted ruins, articulated silhouettes and particle choreography. */
+(function () {
+  const canvas = document.querySelector("#world"),
+    c = canvas.getContext("2d");
+  let W = 1440,
+    H = 900,
+    t = 0,
+    fx = null;
+  window.choreograph = (hero, target, kind) => {
+    fx = { hero, target, kind, start: performance.now() };
+  };
+  const poly = (pts, fill, stroke) => {
+    c.beginPath();
+    pts.forEach((p, i) => (i ? c.lineTo(...p) : c.moveTo(...p)));
+    c.closePath();
+    c.fillStyle = fill;
+    c.fill();
+    if (stroke) {
+      c.strokeStyle = stroke;
+      c.stroke();
+    }
+  };
+  function line(x, y, a, b, color, w = 1) {
+    c.strokeStyle = color;
+    c.lineWidth = w;
+    c.beginPath();
+    c.moveTo(x, y);
+    c.lineTo(a, b);
+    c.stroke();
+  }
+  function oval(x, y, rx, ry, col) {
+    c.fillStyle = col;
+    c.beginPath();
+    c.ellipse(x, y, rx, ry, 0, 0, 7);
+    c.fill();
+  }
+  function person(x, y, id, scale = 1, active = false, dead = false) {
+    c.save();
+    c.translate(x, y + Math.sin(t * 1.8 + x) * 3);
+    c.scale(scale, scale);
+    if (dead) c.globalAlpha = 0.25;
+    let attack =
+      fx && ["tristan", "roy", "niek"][fx.hero] === id
+        ? (performance.now() - fx.start) / 850
+        : 2;
+    let striking = attack < 1 && attack > 0.15;
+    let tr = id === "tristan",
+      roy = id === "roy",
+      col = tr ? "#1d2528" : roy ? "#536879" : "#9d8865",
+      skin = "#c3a080";
+    oval(0, 3, 43, 9, "#060d12aa");
+    if (active) {
+      c.strokeStyle = tr ? "#a1a25d" : roy ? "#8ebdd6" : "#caa490";
+      c.lineWidth = 2;
+      c.beginPath();
+      c.ellipse(0, 3, 46, 12, 0, 0, 7);
+      c.stroke();
+    }
+    poly(
+      [
+        [-25, -73],
+        [-6, -73],
+        [-8, -6],
+        [-27, -6],
+      ],
+      "#202c37",
+    );
+    poly(
+      [
+        [3, -73],
+        [23, -73],
+        [30, -8],
+        [9, -8],
+      ],
+      "#17232e",
+    );
+    line(-27, -25, -8, -25, "#b1b1a0", 7);
+    line(7, -28, 26, -28, "#b1b1a0", 7);
+    poly(
+      [
+        [-29, -9],
+        [-8, -9],
+        [-5, 0],
+        [-36, 0],
+      ],
+      "#111b23",
+    );
+    poly(
+      [
+        [9, -9],
+        [30, -9],
+        [42, 0],
+        [7, 0],
+      ],
+      "#111b23",
+    );
+    poly(
+      [
+        [-23, -145],
+        [20, -145],
+        [30, -77],
+        [-31, -77],
+      ],
+      col,
+      "#17222a",
+    );
+    poly(
+      [
+        [-20, -142],
+        [2, -129],
+        [18, -145],
+        [20, -117],
+        [-21, -117],
+      ],
+      tr ? "#141d21" : "#34434c",
+    );
+    poly(
+      [
+        [-23, -143],
+        [-12, -137],
+        [-17, -86],
+        [-30, -78],
+      ],
+      "#101b2444",
+    );
+    line(8, -113, 20, -113, "#c6c2a155", 1);
+    line(9, -109, 20, -109, "#c6c2a144", 1);
+    line(-4, -116, -4, -80, tr ? "#56615c" : "#c0ac88", 2);
+    if (tr) {
+      line(-22, -136, 18, -87, "#454c46", 7);
+      for (let i = 0; i < 4; i++)
+        line(-17 + i * 8, -86, -17 + i * 8, -77, "#727364", 4);
+    }
+    poly(
+      [
+        [-22, -138],
+        [-33, -128],
+        [-48, -87],
+        [-37, -80],
+        [-15, -117],
+      ],
+      col,
+    );
+    if (striking) {
+      poly(
+        [
+          [19, -140],
+          [37, -140],
+          [88, -139],
+          [89, -125],
+          [38, -122],
+          [18, -116],
+        ],
+        col,
+      );
+      oval(91, -131, 9, 8, skin);
+      line(71, -137, 72, -125, "#b4b4a6", 8);
+    } else
+      poly(
+        [
+          [19, -140],
+          [33, -129],
+          [49, -105],
+          [40, -97],
+          [18, -116],
+        ],
+        col,
+      );
+    line(-45, -95, -41, -84, "#b4b4a6", 10);
+    line(43, -106, 49, -98, "#b4b4a6", 9);
+    oval(-43, -80, 7, 8, skin);
+    oval(49, -96, 7, 7, skin);
+    oval(0, -163, 21, 27, skin);
+    if (tr) {
+      poly(
+        [
+          [-25, -166],
+          [-28, -184],
+          [-15, -180],
+          [-18, -196],
+          [-5, -186],
+          [5, -201],
+          [11, -184],
+          [27, -190],
+          [22, -176],
+          [32, -169],
+          [17, -171],
+          [9, -181],
+          [-3, -173],
+          [-16, -177],
+        ],
+        "#111b1d",
+      );
+      c.strokeStyle = "#11191b";
+      c.lineWidth = 3;
+      c.strokeRect(-19, -168, 16, 11);
+      c.strokeRect(2, -168, 16, 11);
+      line(-3, -164, 2, -164, "#11191b", 2);
+      line(-13, -163, -9, -163, "#aca367", 2);
+      line(7, -163, 11, -163, "#aca367", 2);
+    } else if (roy) {
+      poly(
+        [
+          [-22, -168],
+          [-22, -184],
+          [-14, -192],
+          [7, -193],
+          [22, -180],
+          [21, -169],
+          [12, -178],
+          [-13, -178],
+        ],
+        "#b6a078",
+      );
+      line(-14, -164, -8, -164, "#85bedb", 3);
+      line(6, -164, 12, -164, "#85bedb", 3);
+    } else {
+      poly(
+        [
+          [-25, -156],
+          [-24, -181],
+          [-9, -195],
+          [8, -190],
+          [22, -185],
+          [27, -157],
+          [18, -145],
+          [13, -162],
+          [5, -148],
+          [-3, -164],
+          [-12, -148],
+          [-15, -163],
+        ],
+        "#b49b6b",
+      );
+      poly(
+        [
+          [-30, -88],
+          [27, -88],
+          [29, -72],
+          [-31, -75],
+        ],
+        "#653c44",
+      );
+      for (let i = 0; i < 4; i++)
+        line(48 + i * 2, -92, 62 + i * 5, -24, "#d7c7a277");
+      oval(73, -25, 10, 12, "#746042");
+      line(73, -14, 73, 13, "#816c4d", 8);
+      line(73, 2, 57, 13, "#816c4d", 4);
+      line(74, 2, 88, 11, "#816c4d", 4);
+    }
+    line(-6, -148, 6, -148, "#775c4d", 1);
+    c.restore();
+  }
+  function enemy(x, y, i, b) {
+    let e = b?.enemies[i],
+      boss = e?.name === "Hollow Warden",
+      archer = e?.name.includes("archer"),
+      stalker = e?.name.includes("stalker"),
+      acolyte = e?.name.includes("acolyte");
+    c.save();
+    c.translate(x, y + Math.sin(t * 2 + i) * 2);
+    if (e?.hp <= 0) c.globalAlpha = 0.18;
+    let s = boss ? 1.45 : 1;
+    c.scale(s, s);
+    oval(0, 0, 45, 10, "#060b12aa");
+    poly(
+      [
+        [-24, -85],
+        [-4, -85],
+        [-14, 0],
+        [-34, 0],
+      ],
+      "#252c32",
+    );
+    poly(
+      [
+        [0, -86],
+        [24, -86],
+        [35, 0],
+        [14, 0],
+      ],
+      "#252c32",
+    );
+    poly(
+      [
+        [-30, -148],
+        [26, -148],
+        [38, -72],
+        [-36, -72],
+      ],
+      boss ? "#434442" : "#3c3a42",
+      "#737367",
+    );
+    poly(
+      [
+        [-35, -150],
+        [-55, -138],
+        [-41, -98],
+        [-29, -103],
+      ],
+      "#555549",
+    );
+    poly(
+      [
+        [30, -150],
+        [49, -135],
+        [41, -90],
+        [29, -100],
+      ],
+      "#555549",
+    );
+    oval(0, -169, 24, 27, "#2a2e32");
+    poly(
+      [
+        [-25, -183],
+        [0, -201],
+        [25, -182],
+        [18, -144],
+        [0, -153],
+        [-18, -144],
+      ],
+      "#727063",
+    );
+    line(-16, -173, -4, -169, "#ec9b73", 3);
+    line(5, -169, 16, -173, "#ec9b73", 3);
+    if (boss) {
+      poly(
+        [
+          [-19, -191],
+          [-41, -216],
+          [-31, -178],
+        ],
+        "#777562",
+      );
+      poly(
+        [
+          [19, -191],
+          [41, -216],
+          [31, -178],
+        ],
+        "#777562",
+      );
+      oval(0, -118, 8 + Math.sin(t * 3) * 2, 12, "#d88760");
+    }
+    if (archer) {
+      c.strokeStyle = "#b69d77";
+      c.lineWidth = 4;
+      c.beginPath();
+      c.ellipse(57, -134, 27, 62, 0, -1.5, 1.5);
+      c.stroke();
+      line(58, -195, 58, -73, "#b6c2ad", 1);
+      line(34, -130, 91, -130, "#b6c2ad", 2);
+    } else if (stalker) {
+      poly(
+        [
+          [38, -103],
+          [57, -142],
+          [53, -91],
+        ],
+        "#bbb9a0",
+      );
+      poly(
+        [
+          [-38, -100],
+          [-57, -140],
+          [-54, -87],
+        ],
+        "#bbb9a0",
+      );
+    } else {
+      line(45, -110, 67, -203, "#858576", 5);
+      if (acolyte) {
+        oval(67, -210, 12, 17, "#d69f7a");
+        oval(67, -210, 6, 9, "#ffdbc0");
+      } else
+        poly(
+          [
+            [67, -203],
+            [79, -230],
+            [82, -192],
+          ],
+          "#bbb99d",
+        );
+    }
+    c.restore();
+  }
+  function draw() {
+    if (
+      canvas.width !== Math.round(innerWidth * devicePixelRatio) ||
+      canvas.height !== Math.round(innerHeight * devicePixelRatio)
+    ) {
+      canvas.width = innerWidth * devicePixelRatio;
+      canvas.height = innerHeight * devicePixelRatio;
+    }
+    c.setTransform(
+      (devicePixelRatio * innerWidth) / W,
+      0,
+      0,
+      (devicePixelRatio * innerHeight) / H,
+      0,
+      0,
+    );
+    t = window.reduceMotion ? 0 : performance.now() / 1000;
+    let g = c.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#101f2b");
+    g.addColorStop(0.5, "#34434a");
+    g.addColorStop(1, "#101d24");
+    c.fillStyle = g;
+    c.fillRect(0, 0, W, H);
+    oval(925, 230, 110, 110, "#a0a89418");
+    for (let k = 0; k < 3; k++) {
+      let bottom = 470 + k * 55;
+      for (let i = 0; i < 13; i++) {
+        let x = i * 137 + (k % 2) * 51;
+        poly(
+          [
+            [x, bottom],
+            [x + 17, 240 + k * 55 + ((i * 37) % 90)],
+            [x + 45, 210 + k * 64],
+            [x + 72, 280 + k * 35],
+            [x + 110, bottom],
+          ],
+          ["#263941", "#293b40", "#2c3d40"][k],
+        );
+      }
+    }
+    for (let side of [0, 1]) {
+      c.save();
+      c.translate(side ? W : 0, 0);
+      c.scale(side ? -1 : 1, 1);
+      poly(
+        [
+          [0, 0],
+          [190, 0],
+          [168, 100],
+          [151, 102],
+          [139, 520],
+          [205, 565],
+          [0, 610],
+        ],
+        "#14242b",
+      );
+      for (let i = 0; i < 7; i++)
+        line(10, 130 + i * 58, 146, 132 + i * 58, "#40505655", 2);
+      poly(
+        [
+          [160, 93],
+          [510, 120],
+          [505, 143],
+          [176, 124],
+        ],
+        "#22343b",
+      );
+      poly(
+        [
+          [178, 131],
+          [212, 134],
+          [181, 242],
+        ],
+        "#23353c",
+      );
+      c.restore();
+    }
+    poly(
+      [
+        [0, 570],
+        [500, 500],
+        [990, 520],
+        [1440, 570],
+        [1440, 900],
+        [0, 900],
+      ],
+      "#202d31",
+    );
+    for (let i = 0; i < 20; i++) {
+      let y = 530 + i * i * 1.2;
+      line(0, y, W, y + 10, "#64716b18");
+    }
+    for (let i = 0; i < 15; i++)
+      line(i * 140 - 280, 900, 720 + (i - 7) * 30, 510, "#71807815");
+    for (let i = 0; i < 45; i++) {
+      let x = (i * 127.7 + t * (6 + (i % 3))) % W,
+        y = 180 + ((i * 61) % 480) + Math.sin(t + i) * 15;
+      oval(x, y, i % 3 ? 1 : 2, 1, "#d4b78055");
+    }
+    let b = window.currentBattle;
+    let menu = !b;
+    let positions = menu
+      ? [
+          [880, 675],
+          [1060, 700],
+          [1235, 680],
+        ]
+      : [
+          [270, 583],
+          [420, 615],
+          [560, 595],
+        ];
+    positions.forEach((p, i) => {
+      let off = 0;
+      if (fx && fx.hero === i) {
+        let age = (performance.now() - fx.start) / 850;
+        if (age < 1 && !window.reduceMotion)
+          off =
+            fx.hero === 2
+              ? Math.sin(age * Math.PI) * 15
+              : Math.sin(age * Math.PI) * (fx.hero === 1 ? 530 : 380);
+        else if (age >= 1) fx = null;
+      }
+      person(
+        p[0] + off,
+        p[1],
+        ["tristan", "roy", "niek"][i],
+        menu ? 1.35 : 1.05,
+        b?.active === i && b?.phase === "player",
+        b?.heroes[i].hp <= 0,
+      );
+    });
+    if (b)
+      b.enemies.forEach((e, i) => enemy(1000 + i * 155, 590 + i * 20, i, b));
+    if (fx && !window.reduceMotion) {
+      let age = (performance.now() - fx.start) / 850;
+      if (age < 1) {
+        let col = ["#a6a45f", "#9ecde7", "#ba9693"][fx.hero];
+        let x = 1000 + fx.target * 155,
+          y = 450;
+        c.globalAlpha = Math.sin(age * Math.PI);
+        if (fx.hero === 0) {
+          for (let k = 0; k < 6; k++) {
+            c.beginPath();
+            c.strokeStyle = ["#7f8750", "#897342", "#d1bd79"][k % 3];
+            c.lineWidth = 2 + (k % 2);
+            for (let n = 0; n < 35; n++) {
+              let a = n * 0.3 + age * 6 + k;
+              let r = 50 + k * 12 + Math.sin(n * 2 + k) * 12;
+              let px = x + Math.cos(a) * r,
+                py = y + Math.sin(a) * r * 0.8;
+              n ? c.lineTo(px, py) : c.moveTo(px, py);
+            }
+            c.stroke();
+          }
+        } else if (fx.hero === 1) {
+          for (let k = 0; k < 5; k++)
+            line(
+              420 + age * 600 - k * 35,
+              470 + k * 8,
+              x,
+              450 + k * 5,
+              "#b0d9ea66",
+              3,
+            );
+          if (fx.kind === "cat") {
+            poly(
+              [
+                [x - 70, y + 40],
+                [x - 45, y + 13],
+                [x - 22, y + 26],
+                [x + 15, y + 12],
+                [x + 30, y - 10],
+                [x + 38, y + 8],
+                [x + 53, y - 8],
+                [x + 55, y + 24],
+                [x + 30, y + 44],
+                [x + 10, y + 46],
+                [x + 2, y + 66],
+                [x - 8, y + 46],
+                [x - 35, y + 44],
+                [x - 47, y + 65],
+                [x - 51, y + 40],
+              ],
+              "#a8d5e7",
+            );
+            line(x - 68, y + 39, x - 100, y + 12, "#a8d5e7", 5);
+          }
+        } else {
+          for (let k = 0; k < 8; k++)
+            line(
+              610,
+              500 + k * 3,
+              x + Math.cos(k) * 70,
+              y + Math.sin(k) * 60,
+              "#c9b6a499",
+              1,
+            );
+          if (fx.kind === "poison") {
+            for (let k = 0; k < 15; k++)
+              oval(
+                x + Math.sin(k * 5) * 55,
+                y + Math.cos(k * 3 + age * 3) * 65,
+                10,
+                12,
+                "#9ca77955",
+              );
+          }
+        }
+        for (let j = 0; j < 18; j++) {
+          let angle = j * 2.4;
+          let r = age * 160;
+          line(
+            x + Math.cos(angle) * r * 0.3,
+            y + Math.sin(angle) * r * 0.3,
+            x + Math.cos(angle) * r,
+            y + Math.sin(angle) * r,
+            col,
+            2 + (j % 3),
+          );
+        }
+        c.globalAlpha = 1;
+      }
+    }
+    let shade = c.createLinearGradient(0, 450, 0, 900);
+    shade.addColorStop(0, "#07111800");
+    shade.addColorStop(1, "#071118f5");
+    c.fillStyle = shade;
+    c.fillRect(0, 450, W, 450);
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+</script>
+    <script>
+/* UI and persistence. Classic scripts intentionally support file:// without a server. */
+const N = Nine,
+  app = document.querySelector("#app"),
+  KEY = "team-nine-fractureline-v01";
+let save = N.fresh(),
+  screen = "menu",
+  tab = 0,
+  b = null,
+  busy = false,
+  modal = "",
+  notice = "",
+  saveError = false,
+  hasSave = false;
+function valid(s) {
+  return (
+    s &&
+    s.version === 1 &&
+    Array.isArray(s.heroes) &&
+    s.heroes.length === 3 &&
+    s.heroes.every(
+      (p, i) =>
+        p.id === N.HEROES[i].id &&
+        Number.isInteger(p.level) &&
+        p.level > 0 &&
+        Number.isFinite(p.xp) &&
+        Number.isInteger(p.points) &&
+        p.points >= 0 &&
+        Array.isArray(p.nodes) &&
+        p.nodes.every((n) => Number.isInteger(n) && n >= 0 && n < 6) &&
+        typeof p.gear === "string" &&
+        Number.isFinite(p.mastery) &&
+        p.mastery >= 0 &&
+        (p.masteries === undefined ||
+          (Array.isArray(p.masteries) &&
+            p.masteries.length === 5 &&
+            p.masteries.every((v) => Number.isFinite(v) && v >= 0))),
+    ) &&
+    Array.isArray(s.cleared) &&
+    s.cleared.every((n) => [0, 1, 2].includes(n)) &&
+    Array.isArray(s.inventory) &&
+    s.inventory.every((x) =>
+      [
+        "Scout wraps",
+        "Bronze talisman",
+        "Field charm",
+        "Warden plate",
+      ].includes(x),
+    ) &&
+    Number.isFinite(s.gold) &&
+    s.settings &&
+    typeof s.settings.sound === "boolean" &&
+    typeof s.settings.reduced === "boolean"
+  );
+}
+try {
+  let raw = localStorage.getItem(KEY);
+  if (raw) {
+    let parsed = JSON.parse(raw);
+    if (!valid(parsed)) throw Error("Invalid save");
+    save = parsed;
+    hasSave = true;
+  }
+} catch (e) {
+  notice =
+    "Save unavailable or damaged. You can still play and export a backup.";
+  saveError = true;
+}
+function persist() {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(save));
+    hasSave = true;
+    saveError = false;
+  } catch (e) {
+    saveError = true;
+    toast(
+      "Browser storage is unavailable. Export a save from camp to keep progress.",
+    );
+  }
+}
+function toast(s) {
+  notice = s;
+  render();
+  setTimeout(() => {
+    if (notice === s) {
+      notice = "";
+      render();
+    }
+  }, 4000);
+}
+function esc(s) {
+  return String(s).replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ],
+  );
+}
+let audio;
+function sound(kind) {
+  if (!save.settings.sound) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    audio.resume();
+    let o = audio.createOscillator(),
+      g = audio.createGain();
+    o.type = kind === "tristan" ? "triangle" : "sine";
+    o.frequency.setValueAtTime(
+      kind === "roy" ? 680 : kind === "niek" ? 320 : 150,
+      audio.currentTime,
+    );
+    o.frequency.exponentialRampToValueAtTime(65, audio.currentTime + 0.2);
+    g.gain.setValueAtTime(0.07, audio.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.3);
+    o.connect(g);
+    g.connect(audio.destination);
+    o.start();
+    o.stop(audio.currentTime + 0.3);
+  } catch (e) {}
+}
+const button = (label, action, cls = "", disabled = false) =>
+  `<button class="${cls}" data-action="${action}" ${disabled ? "disabled" : ""}>${label}</button>`;
+function portrait(i) {
+  let hair = ["#18201f", "#b8a179", "#b09a70"][i],
+    coat = ["#242c2d", "#566d80", "#a68d65"][i];
+  return `<svg class="portrait" viewBox="0 0 64 64" aria-label="${N.HEROES[i].name} portrait" role="img"><rect width="64" height="64" fill="#263a40"/><path d="M6 64L13 45 26 40 39 40 52 47 60 64" fill="${coat}"/><path d="M22 27Q17 48 32 49Q48 47 44 27" fill="#c5a487"/><path d="${i === 0 ? "M17 29L13 15 21 19 20 6 29 14 36 3 39 16 51 11 45 27 36 21 27 26Z" : i === 1 ? "M18 29L17 20 23 12 39 12 47 20 46 29 40 23 24 23Z" : "M15 37L16 18 25 9 42 14 49 24 47 41 39 31 34 42 28 32 22 42Z"}" fill="${hair}"/>${i === 0 ? '<g stroke="#111c20" fill="none" stroke-width="2.5"><rect x="20" y="29" width="10" height="7"/><rect x="34" y="29" width="10" height="7"/><path d="M30 31H34"/></g>' : i === 1 ? '<path d="M23 32H28M35 32H40" stroke="#83bddd" stroke-width="2"/>' : ""}<path d="M28 41H35" stroke="#805f50"/><path d="M22 48L32 54 43 47 42 59 22 59" fill="${i === 2 ? "#663c43" : "#29383f"}"/></svg>`;
+}
+function head() {
+  return `<div class="top"><div class="brand">TEAM NINE <span style="color:#788b90">/</span> FRACTURELINE</div><div class="row"><span class="tag">TACTICAL RPG · V0.1</span>${screen !== "menu" ? button("Guide", "guide") : ""}${button(save.settings.sound ? "♫ Sound on" : "♫ Sound off", "sound", "", false)}</div></div>`;
+}
+function menu() {
+  return `<div class="hero-copy"><div class="eyebrow">THREE SHINOBI. ONE FRACTURED WORLD.</div><h1>Every fracture<br>has a <em style="color:var(--gold)">breaking point.</em></h1><p class="muted">Chase the signal beneath the ruins. Master your techniques. Bring everyone home.</p><div class="menu-actions">${button("Continue expedition <span>↗</span>", "camp", "primary", !hasSave)}${button("New expedition <span>→</span>", "new")}${button("Field manual <span>＋</span>", "guide")}${button("Import expedition <span>↑</span>", "import")}</div></div><div class="foot"><span>THE ASHEN AQUEDUCT · CHAPTER 01</span><span>OFFLINE · SINGLE PLAYER · NO INSTALLATION</span></div>`;
+}
+function camp() {
+  return `<section class="screen"><div class="row" style="justify-content:space-between"><div><div class="eyebrow">EXPEDITION / THE ASHEN AQUEDUCT</div><h2>Beyond the fracture</h2><p class="muted">The team rests between missions. HP and chakra are fully restored.</p></div><div class="row"><span class="badge">◈ ${save.gold} salvage</span>${button("Character builds", "build")}${button("Save backup ↓", "export")}${button("Title", "menu")}</div></div><div class="cards">${N.MISSIONS.map(
+    (m, i) => {
+      let locked = i > 0 && !save.cleared.includes(i - 1);
+      return `<article class="panel mission"><span class="eyebrow">${save.cleared.includes(i) ? "✓ COMPLETED" : locked ? "LOCKED" : "MISSION AVAILABLE"}</span><div class="number">0${i + 1}</div><h3>${m.name}</h3><span class="badge">${m.subtitle}</span><p class="muted">${m.desc}</p><span class="hint">${m.xp} XP / hero · ${m.gold} salvage · equipment</span>${button(locked ? "Complete previous mission" : save.cleared.includes(i) ? "Replay encounter ↗" : "Begin encounter ↗", "mission:" + i, "primary", locked)}</article>`;
+    },
+  ).join(
+    "",
+  )}</div><p class="hint">Replay missions for experience. No permanent loss on defeat. Progress saves after rewards and build changes.</p><div class="row">${save.heroes.map((h, i) => `<span class="turn">${N.HEROES[i].name} · Lv ${h.level} · ${h.points} skill points</span>`).join("")}</div></section>`;
+}
+function builds() {
+  let p = save.heroes[tab],
+    s = N.stats(save, tab);
+  return `<section class="screen"><div class="row" style="justify-content:space-between"><div><div class="eyebrow">PERMANENT PROGRESSION</div><h2>Power takes a shape.</h2></div>${button("Back to camp", "camp")}</div><div class="tabs">${N.HEROES.map((h, i) => button(h.name + " · Lv " + save.heroes[i].level, "tab:" + i, i === tab ? "chosen" : "")).join("")}</div><div class="panel"><div class="row" style="justify-content:space-between"><div><span class="eyebrow">${N.HEROES[tab].role}</span><h3>${N.HEROES[tab].name} · ${p.points} skill points</h3></div><div class="badge">${s.hp} HP · ${s.chakra} chakra · ${s.atk} attack · ${p.mastery} mastery</div></div><p class="muted">${["Propulsion turns stored Momentum into crushing force. Retraction tears an enemy’s attack apart.", "Charge accelerates chakra recovery. Lightning-cat attacks exploit Niek’s poison.", "Threads become traps, venom and precision. Poison bypasses armor."][tab]}<br>${p.xp} / ${p.level * 60} XP to next level · each technique earns mastery for up to +10% damage.</p><div class="nodes">${N.NODES.map(
+    (n, i) => {
+      let owned = p.nodes.includes(i),
+        locked = n.requires !== undefined && !p.nodes.includes(n.requires);
+      return `<button class="node ${owned ? "owned" : ""}" data-action="unlock:${i}" ${owned || locked || p.points < n.cost ? "disabled" : ""}><span class="eyebrow">${n.branch} ${n.requires !== undefined ? "II" : "I"}</span><b>${i === 3 ? N.ABILITIES[p.id][4][0] : n.name}</b><span class="muted">${n.desc}</span><small>${owned ? "✓ LEARNED" : locked ? "Requires " + N.NODES[n.requires].name : n.cost + " skill points"}</small></button>`;
+    },
+  ).join(
+    "",
+  )}</div><div class="equipment row"><span class="eyebrow">EQUIPMENT</span><select id="gear" aria-label="Equip item">${save.inventory.map((g) => `<option ${p.gear === g ? "selected" : ""}>${g}</option>`).join("")}</select><span class="muted">${gearText(p.gear)}</span></div><p class="hint">Loadouts are permanent until changed. Respec costs 25 salvage. Gear is shared; each hero may use any unlocked pattern.</p>${button("Reset skill tree · 25 salvage", "respec", "", save.gold < 25 || !p.nodes.length)}${button("Forge Field charm · 60 salvage", "forge", "", save.gold < 60 || save.inventory.includes("Field charm"))}</div></section>`;
+}
+function gearText(g) {
+  return (
+    {
+      "Scout wraps": "Balanced starting equipment.",
+      "Bronze talisman": "+5 attack.",
+      "Field charm": "+10 chakra and +15 HP.",
+      "Warden plate": "+35 HP and reduce incoming damage by 4.",
+    }[g] || ""
+  );
+}
+function bar(value, max, cls = "") {
+  return `<div class="bar ${cls}"><i style="width:${Math.max(0, (value / max) * 100)}%"></i></div>`;
+}
+function combat() {
+  let h = b.heroes[b.active],
+    p = save.heroes[b.active];
+  return `<div class="combat-title"><div><span class="eyebrow">ENCOUNTER 0${b.mission + 1} / ROUND ${b.round}</span><h2>${N.MISSIONS[b.mission].name}</h2></div>${button("Retreat", "retreat")}</div><div class="timeline"><span class="eyebrow">INITIATIVE →</span>${b.heroes.map((h, i) => `<span class="turn ${i === b.active && b.phase === "player" ? "active" : ""}">${h.hp <= 0 ? "× " : b.acted.includes(i) ? "✓ " : ""}${h.name}</span>`).join("")}<span class="turn ${b.phase === "enemy" ? "active" : ""}">Enemy phase</span></div><div class="telegraphs">${b.enemies.map((e, i) => `<button class="enemy ${b.selected === i ? "selected" : ""}" data-action="target:${i}" ${e.hp <= 0 ? "disabled" : ""}><strong>${e.name}</strong>${bar(e.hp, e.maxhp)}<span class="tag">${e.hp} / ${e.maxhp} HP</span><small>${e.hp <= 0 ? "DEFEATED" : e.wind === 0 ? "STAGGERED · attack cancelled" : (e.name === "Hollow Warden" ? "RUPTURE · ALL ALLIES" : e.name === "Ash acolyte" && b.enemies.some((x) => x.name === "Hollow Warden" && x.hp > 0) ? "MEND WARDEN +32" : (e.name === "Venom stalker" ? "VENOM → " : "STRIKE → ") + (N.enemyTarget(b, e)?.name || "")) + " · " + e.wind + " wind-up"}</small><small>${e.poison ? "☠ Poison " + e.poison + " " : ""}${e.exposed ? "◇ Exposed " : ""}${e.armor ? "▰ Armor " + e.armor : ""}${e.name === "Hollow Warden" && e.hp < e.maxhp / 2 ? " · ENRAGED" : ""}</small></button>`).join("")}</div><div class="battle-bottom"><div class="party">${b.heroes.map((h, i) => `<div class="hero-card ${b.active === i ? "active" : ""}"><header><div class="row">${portrait(i)}<b>${h.name}</b></div><small>Lv ${save.heroes[i].level} ${h.guard ? " / GUARDED" : ""}${h.poison ? " / VENOM " + h.poison : ""}</small></header>${bar(h.hp, h.maxhp)}<small>${h.hp}/${h.maxhp} HP</small>${bar(h.chakra, h.maxchakra, "chakra")}<small>${h.chakra} chakra · ${h.resource} ${"◆".repeat(h.resourceValue)}${"◇".repeat(5 - h.resourceValue)}</small></div>`).join("")}</div><div class="commands"><div class="panel"><div class="eyebrow">${busy ? "RESOLVING ATTACK…" : h.name.toUpperCase() + " / CHOOSE AN ACTION"}</div><p class="hint">Select an enemy above. Interrupts at 0 wind-up cancel its next attack.</p><div class="abilities">${N.ABILITIES[
+    h.id
+  ]
+    .map((a, i) => {
+      let cost = Math.max(0, a[1] - (p.nodes.includes(4) && a[1] ? 4 : 0));
+      return `<button class="ability" title="${a[3]}" data-action="ability:${i}" ${busy || b.phase !== "player" || h.chakra < cost || (i === 4 && !p.nodes.includes(3)) ? "disabled" : ""}><b>${a[0]}</b><small>${i === 4 && !p.nodes.includes(3) ? "SKILL TREE UNLOCK" : cost ? cost + " CHAKRA" : "QUICK / +5 CHAKRA"}</small><small style="display:block;margin-top:5px">${a[3]}</small><small style="display:block;margin-top:5px;color:var(--gold)">Mastery ${(p.masteries || [])[i] || 0} / 100</small></button>`;
+    })
+    .join(
+      "",
+    )}${button("Guard<br><small>+12 chakra · 60% mitigation</small>", "guard", "ability", busy || b.phase !== "player")}</div></div><div class="log" role="log">${b.log.map(esc).join("<br>")}</div></div></div>`;
+}
+function result() {
+  let win = b.result === "victory",
+    m = N.MISSIONS[b.mission];
+  return `<section class="result panel"><div class="eyebrow">${win ? "ENCOUNTER COMPLETE" : "THE FRACTURE HOLDS"}</div><h1 style="font-size:64px">${win ? "Still standing." : "Regroup. Return."}</h1><p class="muted">${win ? (b.mission === 2 ? "The Warden falls. The signal goes quiet. Team Nine returns together. Chapter one is complete; refine your builds or replay any encounter." : "The path ahead opens. Your techniques grow stronger with every battle.") : "No progress was lost. Spend skill points, change equipment, or use Guard to rebuild chakra. Interrupt dangerous attacks and poison armored targets."}</p>${win ? `<p class="badge">+${m.xp} XP to each hero · +${m.gold} salvage<br>Pattern recovered: ${["Bronze talisman", "Field charm", "Warden plate"][b.mission]}</p><div class="row">${save.heroes.map((p, i) => `<span class="turn">${N.HEROES[i].name} · Lv ${p.level} · ${p.points} points</span>`).join("")}</div>` : ""}<div class="row" style="margin-top:25px">${button("Return to camp", "camp", "primary")}${!win ? button("Retry encounter", "mission:" + b.mission) : button("Develop techniques", "build")}</div></section>`;
+}
+function guide() {
+  return `<div class="modal"><div class="panel"><span class="eyebrow">FIELD MANUAL</span><h2>Read the fight.</h2><p class="muted">Each living hero acts once, then enemies resolve their telegraphs. Select a target, then a technique. Quick attacks recover chakra and build a unique resource. Every round restores 3 chakra.</p><p><b>Break their rhythm.</b> Retraction, Static snare and Tripwire reduce wind-up by 2. At zero, the enemy loses its next attack and resets. The archer targets your weakest ally; guard blocks the stalker’s venom, and Niek’s Repair weave cleanses it. The acolyte heals the Warden. The Warden’s Rupture hits everyone. Below half HP, it consumes 2 wind-up each turn.</p><p><b>Set up a combination.</b> Niek’s venom deals 10 damage over 3 enemy turns, bypassing armor. Roy’s Thunderclaw hits poisoned enemies 50% harder. Exposed targets take 25% more damage.</p><p><b>Use your resources.</b> Tristan spends 2 Momentum on Propulsion for bonus force. Roy and Niek consume 3 Charge / Threads when using a technique to regain 8 chakra. Guard restores 12 chakra and reduces the next hit by 60%.</p><p><b>Grow permanently.</b> Earn XP and skill points, unlock signature techniques, equip patterns and build mastery. Heroes revive and fully recover at camp. Replays award full rewards. Defeat costs nothing.</p><p class="muted">Autosaves happen at camp and after rewards or build changes. Battles restart after closing the game. Export a JSON backup for transfers or if your browser restricts file storage. Keep all game files together. Sound and reduced motion are optional.</p><div class="row">${button("Understood", "close", "primary")}${button(save.settings.reduced ? "Motion: reduced" : "Motion: full", "motion")}</div></div></div>`;
+}
+function render() {
+  window.currentBattle = screen === "combat" ? b : null;
+  window.reduceMotion = save.settings.reduced;
+  app.innerHTML =
+    head() +
+    (screen === "menu"
+      ? menu()
+      : screen === "camp"
+        ? camp()
+        : screen === "build"
+          ? builds()
+          : screen === "combat"
+            ? combat()
+            : result()) +
+    (modal === "guide"
+      ? guide()
+      : modal === "new"
+        ? `<div class="modal"><div class="panel"><h2>A new expedition?</h2><p>This replaces your saved progress. Export a backup from camp first if you want to keep it.</p><div class="row">${button("Start fresh", "confirm-new", "primary")}${button("Cancel", "close")}</div></div></div>`
+        : modal === "retreat"
+          ? `<div class="modal"><div class="panel"><h2>Return to camp?</h2><p>This encounter will restart. Your permanent progress is safe.</p><div class="row">${button("Retreat", "confirm-retreat")}${button("Keep fighting", "close", "primary")}</div></div></div>`
+          : "") +
+    (notice ? `<div class="notice" role="status">${esc(notice)}</div>` : "") +
+    `<input type="file" id="import-file" accept="application/json,.json" hidden>`;
+  document.querySelector("#gear")?.addEventListener("change", (e) => {
+    save.heroes[tab].gear = e.target.value;
+    persist();
+    render();
+  });
+  document.querySelector("#import-file").addEventListener("change", importSave);
+}
+function start(i) {
+  if (i > 0 && !save.cleared.includes(i - 1)) return;
+  b = N.battle(save, i);
+  busy = false;
+  screen = "combat";
+  render();
+}
+function finish() {
+  if (b.result) {
+    if (b.result === "victory") N.reward(save, b);
+    persist();
+    screen = "result";
+    busy = false;
+    render();
+    return true;
+  }
+  return false;
+}
+function resolve(index, guard = false) {
+  if (busy || screen !== "combat" || b.phase !== "player") return;
+  let hero = b.active,
+    target = b.selected;
+  if (!guard && !N.act(save, b, index, target)) return;
+  if (guard && !N.defend(b)) return;
+  busy = true;
+  sound(N.HEROES[hero].id);
+  if (!guard)
+    choreograph(hero, target, N.ABILITIES[N.HEROES[hero].id][index][4]);
+  render();
+  setTimeout(
+    () => {
+      if (finish()) return;
+      if (b.phase === "enemy") {
+        N.enemyTurn(b);
+        if (finish()) return;
+      }
+      if (b.enemies[b.selected].hp <= 0)
+        b.selected = b.enemies.findIndex((e) => e.hp > 0);
+      busy = false;
+      render();
+    },
+    save.settings.reduced ? 100 : 850,
+  );
+}
+function exportSave() {
+  persist();
+  let blob = new Blob([JSON.stringify(save, null, 2)], {
+      type: "application/json",
+    }),
+    a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "team-nine-expedition.json";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+async function importSave(e) {
+  let f = e.target.files[0];
+  if (!f) return;
+  try {
+    if (f.size > 100000) throw Error();
+    let s = JSON.parse(await f.text());
+    if (!valid(s)) throw Error();
+    save = s;
+    persist();
+    screen = "camp";
+    toast("Expedition restored.");
+  } catch (e) {
+    toast(
+      "That file is not a valid v0.1 expedition. Your current save is unchanged.",
+    );
+  }
+}
+app.addEventListener("click", (e) => {
+  let el = e.target.closest("[data-action]");
+  if (!el || el.disabled) return;
+  let [a, v] = el.dataset.action.split(":");
+  if (a === "sound") {
+    save.settings.sound = !save.settings.sound;
+    persist();
+    toast(save.settings.sound ? "Sound enabled" : "Sound muted");
+  } else if (a === "motion") {
+    save.settings.reduced = !save.settings.reduced;
+    persist();
+    render();
+  } else if (a === "guide") {
+    modal = "guide";
+    render();
+  } else if (a === "close") {
+    modal = "";
+    render();
+  } else if (a === "new") {
+    if (hasSave) {
+      modal = "new";
+      render();
+    } else newGame();
+  } else if (a === "confirm-new") newGame();
+  else if (a === "camp" || a === "menu" || a === "build") {
+    screen = a;
+    modal = "";
+    b = null;
+    persist();
+    render();
+  } else if (a === "mission") start(+v);
+  else if (a === "tab") {
+    tab = +v;
+    render();
+  } else if (a === "unlock") {
+    if (N.unlock(save, tab, +v)) {
+      persist();
+      render();
+    }
+  } else if (a === "respec") {
+    let p = save.heroes[tab];
+    if (save.gold >= 25) {
+      save.gold -= 25;
+      p.points += p.nodes.reduce((sum, n) => sum + N.NODES[n].cost, 0);
+      p.nodes = [];
+      persist();
+      render();
+    }
+  } else if (a === "forge") {
+    if (save.gold >= 60 && !save.inventory.includes("Field charm")) {
+      save.gold -= 60;
+      save.inventory.push("Field charm");
+      persist();
+      render();
+    }
+  } else if (a === "target") {
+    if (!busy) {
+      b.selected = +v;
+      render();
+    }
+  } else if (a === "ability") resolve(+v);
+  else if (a === "guard") resolve(0, true);
+  else if (a === "retreat") {
+    if (!busy) {
+      modal = "retreat";
+      render();
+    }
+  } else if (a === "confirm-retreat") {
+    screen = "camp";
+    modal = "";
+    b = null;
+    persist();
+    render();
+  } else if (a === "export") exportSave();
+  else if (a === "import") {
+    document.querySelector("#import-file").click();
+  }
+});
+function newGame() {
+  save = N.fresh();
+  persist();
+  screen = "camp";
+  modal = "";
+  b = null;
+  render();
+}
+render();
+
+</script>
+  </body>
+</html>
